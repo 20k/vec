@@ -487,6 +487,23 @@ struct vec
         return rot;
     }
 
+    ///min -> max
+    vec<N, T> sorted()
+    {
+        std::vector<T> vc(v, v+N);
+
+        std::sort(vc.begin(), vc.end());
+
+        vec<N, T> ret;
+
+        for(int i=0; i<N; i++)
+        {
+            ret.v[i] = vc[i];
+        }
+
+        return ret;
+    }
+
     ///so y is along rectangle axis
     ///remember, z is not along the rectangle axis, its perpendicular to x
     ///extrinsic x, y, z
@@ -788,7 +805,7 @@ inline float randf_s()
 ///https://stackoverflow.com/questions/686353/c-random-float-number-generation
 inline float randf_s(float M, float N)
 {
-    return M + (rand() / ( RAND_MAX / (N-M) ) ) ;
+    return M + (rand() / ( (RAND_MAX + 1.f) / (N-M) ) ) ;
 }
 
 template<int N, typename T>
