@@ -12,6 +12,7 @@
 
 #define M_PI		3.14159265358979323846
 #define M_PIf ((float)M_PI)
+#define M_SQRT1_2 0.70710678118654752440
 
 ///bad, only for temporary debugging
 #define EXPAND_3(vec) vec.v[0], vec.v[1], vec.v[2]
@@ -806,6 +807,12 @@ inline float randf_s()
 inline float randf_s(float M, float N)
 {
     return M + (rand() / ( (RAND_MAX + 1.f) / (N-M) ) ) ;
+}
+
+///https://stackoverflow.com/questions/2328258/cumulative-normal-distribution-function-in-c-c
+inline float normal_cdf(float value)
+{
+   return 0.5f * erfc(-value * M_SQRT1_2);
 }
 
 template<int N, typename T>
