@@ -53,7 +53,17 @@ struct vec
         return v[0];
     }
 
+    T x() const
+    {
+        return v[0];
+    }
+
     T& y()
+    {
+        return v[1];
+    }
+
+    T y() const
     {
         return v[1];
     }
@@ -63,12 +73,32 @@ struct vec
         return v[2];
     }
 
+    T z() const
+    {
+        return v[2];
+    }
+
     T& w()
     {
         return v[3];
     }
 
+    T w() const
+    {
+        return v[3];
+    }
+
     vec<2, T>& xy()
+    {
+        ///umm. I think I might have committed some sort of deadly sin
+        ///although I believe the C spec is slightly more permitting of this than
+        ///you might believe at first sight
+        vec<2, T>& ret = *(vec<2, T>*)&v[0];
+
+        return ret;
+    }
+
+    vec<2, T> xy() const
     {
         ///umm. I think I might have committed some sort of deadly sin
         ///although I believe the C spec is slightly more permitting of this than
@@ -445,6 +475,19 @@ struct vec
         return ret;
     }
 
+    vec<N, T> depth_project(const vec<3, float>& rotated, const vec<2, float>& screen_dimensions, float field_of_view_focal_length) const
+    {
+        vec<3, float> pos = rotated;
+
+        pos.x() = pos.x() * field_of_view_focal_length / pos.z();
+        pos.y() = pos.y() * field_of_view_focal_length / pos.z();
+
+        pos.x() = pos.x() + screen_dimensions.x()/2;
+        pos.y() = pos.y() + screen_dimensions.y()/2;
+
+        return pos;
+    }
+
     ///only valid for a 2-vec
     ///need to rejiggle the templates to work this out
     vec<2, T> rot(T rot_angle)
@@ -608,10 +651,8 @@ vec<N, T> sqrtf(const vec<N, T>& v)
 }
 
 template<typename T, typename U>
-approx_equal(T v1, U v2)
+approx_equal(T v1, U v2, float bound = 0.0001f)
 {
-    float bound = 0.0001f;
-
     return v1 >= v2 - bound && v1 < v2 + bound;
 }
 
@@ -663,6 +704,20 @@ vec<N, T> round(const vec<N, T>& v)
     for(int i=0; i<N; i++)
     {
         ret.v[i] = roundf(v.v[i]);
+    }
+
+    return ret;
+}
+
+template<int N, typename T>
+inline
+vec<N, T> trunc(const vec<N, T>& v)
+{
+    vec<N, T> ret;
+
+    for(int i=0; i<N; i++)
+    {
+        ret.v[i] = truncf(v.v[i]);
     }
 
     return ret;
@@ -1533,6 +1588,15 @@ vec<N, T> rejection(const vec<N, T>& v1, const vec<N, T>& v2)
 
     return val;
 }*/
+
+template<int N, typename T>
+inline
+vec<N, T> ray_plane_intersect(const vec<N, T>& ray_dir, const vec<N, T>& ray_pos, const vec<N, T>& plane_normal, const vec<N, T>& plane_pos)
+{
+    float d = dot((plane_pos - ray_pos), plane_normal) / dot(ray_dir, plane_normal);
+
+    return d * ray_dir + ray_pos;
+}
 
 template<int N, typename T>
 inline
@@ -2529,6 +2593,18 @@ struct quaternion
     quaternion identity()
     {
         return {{0, 0, 0, 1}};
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const quaternion& v1)
+    {
+        for(int i=0; i<4-1; i++)
+        {
+            os << std::to_string(v1.q.v[i]) << " ";
+        }
+
+        os << std::to_string(v1.q.v[4-1]);
+
+        return os;
     }
 };
 
