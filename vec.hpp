@@ -475,15 +475,28 @@ struct vec
         return ret;
     }
 
-    vec<N, T> depth_project(const vec<3, float>& rotated, const vec<2, float>& screen_dimensions, float field_of_view_focal_length) const
+    vec<N, T> depth_project(const vec<2, float>& screen_dimensions, float field_of_view_focal_length) const
     {
-        vec<3, float> pos = rotated;
+        vec<3, float> pos = *this;
 
         pos.x() = pos.x() * field_of_view_focal_length / pos.z();
         pos.y() = pos.y() * field_of_view_focal_length / pos.z();
 
         pos.x() = pos.x() + screen_dimensions.x()/2;
         pos.y() = pos.y() + screen_dimensions.y()/2;
+
+        return pos;
+    }
+
+    vec<N, T> depth_unproject(const vec<2, float>& screen_dimensions, float field_of_view_focal_length) const
+    {
+        vec<3, float> pos = *this;
+
+        pos.x() = pos.x() - screen_dimensions.x()/2;
+        pos.y() = pos.y() - screen_dimensions.y()/2;
+
+        pos.x() = pos.x() * pos.z() / field_of_view_focal_length;
+        pos.y() = pos.y() * pos.z() / field_of_view_focal_length;
 
         return pos;
     }
