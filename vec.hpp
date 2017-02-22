@@ -1518,7 +1518,7 @@ inline vec<N, T> slerp(const vec<N, T>& v1, const vec<N, T>& v2, float a)
     vec<N, T> ret;
 
     if(v1.length() * v2.length() < 0.001f)
-        return;
+        return v1;
 
     float acos_arg = dot(v1, v2) / (v1.length() * v2.length());
 
