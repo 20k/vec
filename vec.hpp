@@ -1517,10 +1517,15 @@ inline vec<N, T> slerp(const vec<N, T>& v1, const vec<N, T>& v2, float a)
 {
     vec<N, T> ret;
 
-    ///im sure you can convert the cos of a number to the sign, rather than doing this
-    float angle = acos(dot(v1, v2) / (v1.length() * v2.length()));
+    if(v1.length() * v2.length() < 0.001f)
+        return;
 
-    if(angle < 0.00001f && angle >= -0.00001f)
+    float acos_arg = dot(v1, v2) / (v1.length() * v2.length());
+
+    ///im sure you can convert the cos of a number to the sign, rather than doing this
+    float angle = acos(clamp(acos_arg, -1, 1));
+
+    if(sin(angle) < 0.01f && sin(angle) >= -0.01f)
         return mix(v1, v2, a);
 
     float a1 = sin((1 - a) * angle) / sin(angle);
@@ -1624,7 +1629,7 @@ vec<N, T> projection(const vec<N, T>& v1, const vec<N, T>& dir)
 
 inline vec3f generate_flat_normal(const vec3f& p1, const vec3f& p2, const vec3f& p3)
 {
-    return cross(p2 - p1, p3 - p1).norm();
+    return cross((p2 - p1).norm(), (p3 - p1).norm()).norm();
 }
 
 ///t should be some container of vec3f
