@@ -2391,7 +2391,7 @@ struct quaternion
     }
 
     ///this * ret == q
-    quaternion get_difference(quaternion q)
+    quaternion get_difference(quaternion q) const
     {
         mat3f t = get_rotation_matrix();
         mat3f o = q.get_rotation_matrix();
@@ -2442,6 +2442,7 @@ struct quaternion
     ///so now i feel like i can gloat at least
     ///http://www.mrpt.org/tutorials/programming/maths-and-geometry/slerp-interpolation/
     ///seems more legit
+    ///q1.q * (1.f - t) + q2.q * t, perhaps backwards to what you'd expect
     static
     quaternion slerp(const quaternion& q1, const quaternion& q2, float t)
     {
@@ -2487,7 +2488,7 @@ struct quaternion
     }
 
     ///http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToMatrix/
-    mat3f get_rotation_matrix()
+    mat3f get_rotation_matrix() const
     {
         mat3f m;
 
@@ -2511,7 +2512,7 @@ struct quaternion
         return m;
     }
 
-    quaternion norm()
+    quaternion norm() const
     {
         /*float w = q.v[3];
 
@@ -2531,7 +2532,7 @@ struct quaternion
         return ret;
     }
 
-    quaternion conjugate()
+    quaternion conjugate() const
     {
         quaternion ret;
 
@@ -2544,7 +2545,7 @@ struct quaternion
         return ret;
     }
 
-    quaternion inverse()
+    quaternion inverse() const
     {
         quaternion conj = conjugate();
 
@@ -2556,7 +2557,7 @@ struct quaternion
         return q;
     }
 
-    vec4f to_axis_angle()
+    vec4f to_axis_angle() const
     {
         float qx = q.v[0];
         float qy = q.v[1];
@@ -2608,7 +2609,7 @@ struct quaternion
        return q.w();
     }
 
-    quaternion identity()
+    quaternion identity() const
     {
         return {{0, 0, 0, 1}};
     }
