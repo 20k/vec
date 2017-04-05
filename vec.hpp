@@ -21,7 +21,7 @@
 template<int N, typename T>
 struct vec
 {
-    T v[N];
+    T v[N] = {};
 
     vec(std::initializer_list<T> init)
     {
@@ -1458,6 +1458,14 @@ inline vec<N, T> d2r(const vec<N, T>& v1)
     {
         ret.v[i] = (v1.v[i] / 360.f) * M_PI * 2;
     }
+
+    return ret;
+}
+
+template<typename T>
+inline T d2r(const T& v1)
+{
+    T ret = (v1 / 360.f) * M_PI * 2;
 
     return ret;
 }
