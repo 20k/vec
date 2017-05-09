@@ -43,7 +43,7 @@ struct vec
 
             for(; i<N; i++)
             {
-                v[i] = 0.f;
+                v[i] = T();
             }
         }
     }
@@ -1043,9 +1043,12 @@ inline vec3f back_rot(const vec3f& p1, const vec3f& pos, const vec3f& rot)
     return p1.back_rot(pos, rot);
 }
 
-inline vec3f cross(const vec3f& v1, const vec3f& v2)
+template<int N, typename T>
+inline vec<N, T> cross(const vec<N, T>& v1, const vec<N, T>& v2)
 {
-    vec3f ret;
+    static_assert(N == 3, "Error cross product only defined for N == 3");
+
+    vec<N, T> ret;
 
     ret.v[0] = v1.v[1] * v2.v[2] - v1.v[2] * v2.v[1];
     ret.v[1] = v1.v[2] * v2.v[0] - v1.v[0] * v2.v[2];
@@ -1635,7 +1638,8 @@ vec<N, T> projection(const vec<N, T>& v1, const vec<N, T>& dir)
     return a1 * ndir;
 }
 
-inline vec3f generate_flat_normal(const vec3f& p1, const vec3f& p2, const vec3f& p3)
+template<int N, typename T>
+inline vec<N, T> generate_flat_normal(const vec<N, T>& p1, const vec<N, T>& p2, const vec<N, T>& p3)
 {
     return cross((p2 - p1).norm(), (p3 - p1).norm()).norm();
 }
