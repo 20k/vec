@@ -1639,6 +1639,13 @@ vec<N, T> projection(const vec<N, T>& v1, const vec<N, T>& dir)
 }
 
 template<int N, typename T>
+inline
+vec<N, T> reflect(const vec<N, T>& v1, const vec<N, T>& normal)
+{
+    return v1.norm() - 2.f * dot(v1.norm(), normal.norm()) * normal.norm();
+}
+
+template<int N, typename T>
 inline vec<N, T> generate_flat_normal(const vec<N, T>& p1, const vec<N, T>& p2, const vec<N, T>& p3)
 {
     return cross((p2 - p1).norm(), (p3 - p1).norm()).norm();
