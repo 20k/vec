@@ -23,7 +23,7 @@ struct vec
 {
     T v[N] = {};
 
-    vec(std::initializer_list<T> init)
+    constexpr vec(std::initializer_list<T> init)
     {
         if(init.size() == 1)
         {
@@ -34,7 +34,7 @@ struct vec
         }
         else
         {
-            int i;
+            int i = 0;
 
             for(i=0; i<init.size(); i++)
             {
@@ -1085,6 +1085,23 @@ T angle_between_vectors(const vec<N, T>& v1, const vec<N, T>& v2)
 }
 
 template<int N, typename T>
+inline
+T signed_angle_between_vectors(const vec<N, T>& v1, const vec<N, T>& v2)
+{
+    vec<N, T> perp = perpendicular(v1.norm());
+
+    float angle = angle_between_vectors(v1, v2);
+
+    if(dot(perp, v2) < 0)
+    {
+        angle = -angle;
+    }
+
+    ///v1 + angle = v2
+    return angle;
+}
+
+template<int N, typename T>
 inline vec<N, T> operator-(const vec<N, T>& v1)
 {
     vec<N, T> ret;
@@ -1764,6 +1781,26 @@ vec<N, T> point2line_shortest(const vec<N, T>& lp, const vec<N, T>& ldir, const 
     ret = (lp - p) - dot(lp - p, n) * n;
 
     return ret;
+}
+
+template<typename T>
+inline
+vec<2, T> point2line_intersection(const vec<2, T>& p1, const vec<2, T>& p2, const vec<2, T>& p3, const vec<2, T>& p4)
+{
+    float x1 = p1.x();
+    float x2 = p2.x();
+    float x3 = p3.x();
+    float x4 = p4.x();
+
+    float y1 = p1.y();
+    float y2 = p2.y();
+    float y3 = p3.y();
+    float y4 = p4.y();
+
+    float xp = ((x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)) / ((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4));
+    float yp = ((x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)) / ((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4));
+
+    return {xp, yp};
 }
 
 ///https://stackoverflow.com/questions/1560492/how-to-tell-whether-a-point-is-to-the-right-or-left-side-of-a-line
