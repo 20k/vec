@@ -1010,6 +1010,18 @@ vec<N, T> pow(const vec<N, T>& v1, U p)
     return ret;
 }
 
+template<int N, typename T, typename U>
+vec<N, T> pow(const vec<N, T>& v1, const vec<N, U>& p)
+{
+    vec<N, T> ret;
+
+    for(int i=0; i<N; i++)
+    {
+        ret.v[i] = pow(v1.v[i], p.v[i]);
+    }
+
+    return ret;
+}
 
 ///0 -> 1, returns packed RGBA uint
 inline
@@ -1503,6 +1515,19 @@ inline vec<N, T> mix(const vec<N, T>& v1, const vec<N, T>& v2, float a)
     for(int i=0; i<N; i++)
     {
         ret.v[i] = v1.v[i] * (1.f - a) + v2.v[i] * a;//v1.v[i] + (v2.v[i] - v1.v[i]) * a;
+    }
+
+    return ret;
+}
+
+template<int N, typename T>
+inline vec<N, T> mix(const vec<N, T>& v1, const vec<N, T>& v2, const vec<N, T>& a)
+{
+    vec<N, T> ret;
+
+    for(int i=0; i<N; i++)
+    {
+        ret.v[i] = v1.v[i] * (1.f - a.v[i]) + v2.v[i] * a.v[i];
     }
 
     return ret;
