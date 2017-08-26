@@ -119,9 +119,14 @@ struct vec
     }
 
     ///can't figure out an easy way to make this referency
-    vec<2, T> xz()
+    vec<2, T> xz() const
     {
         return {v[0], v[2]};
+    }
+
+    vec<3, T> xyz() const
+    {
+        return {v[0], v[1], v[2]};
     }
 
     ///lets modernise the code a little
