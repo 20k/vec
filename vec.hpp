@@ -741,9 +741,9 @@ vec<N, T> trunc(const vec<N, T>& v)
     return ret;
 }
 
-template<int N, typename T>
+/*template<int N, typename T>
 inline
-vec<N, T> round_to_multiple(const vec<N, T>& v, int multiple)
+vec<N, T> round_to_multiple(const vec<N, T>& v, float multiple)
 {
     vec<N, T> ret;
 
@@ -755,6 +755,18 @@ vec<N, T> round_to_multiple(const vec<N, T>& v, int multiple)
     }
 
     return ret;
+}*/
+
+template<typename T>
+T round_to_multiple(const T& v, float multiple)
+{
+    T ret;
+
+    ret = v / multiple;
+
+    ret = round(ret);
+
+    return ret * multiple;
 }
 
 template<int N, typename T>
@@ -1512,6 +1524,13 @@ inline float mix(float p1, float p2, float a)
     return p1 * (1.f - a) + p2 * a;
 }
 
+inline float cos_mix(float p1, float p2, float a)
+{
+    float mu2 = (1.f - cos(a * M_PI))/2.f;
+
+    return mix(p1, p2, mu2);
+}
+
 template<int N, typename T>
 inline vec<N, T> mix(const vec<N, T>& v1, const vec<N, T>& v2, float a)
 {
@@ -1551,6 +1570,31 @@ inline vec<N, T> mix3(const vec<N, T>& v1, const vec<N, T>& mid, const vec<N, T>
     }
 }
 
+inline float mix3(float v1, float mid, float v2, float a)
+{
+    if(a <= 0.5f)
+    {
+        return mix(v1, mid, a * 2.f);
+    }
+    else
+    {
+        return mix(mid, v2, (a - 0.5f) * 2.f);
+    }
+}
+
+template<int N, typename T>
+inline vec<N, T> cos_mix(const vec<N, T>& v1, const vec<N, T>& v2, float a)
+{
+    vec<N, T> ret;
+
+    for(int i=0; i<N; i++)
+    {
+        ret.v[i] = cos_mix(v1.v[i], v2.v[i], a);
+    }
+
+    return ret;
+}
+
 /*template<int N, typename T>
 inline vec<N, T> slerp(const vec<N, T>& v1, const vec<N, T>& v2, float a)
 {
@@ -1569,6 +1613,29 @@ inline vec<N, T> slerp(const vec<N, T>& v1, const vec<N, T>& v2, float a)
 
     return ret;
 }*/
+
+template<typename T>
+void piecewise_linear(T& accumulator, T mstart, T mend, float mstart_frac, float mend_frac, float val)
+{
+    if(val == mstart_frac)
+    {
+        accumulator = mstart;
+        return;
+    }
+
+    if(val == mend_frac)
+    {
+        accumulator = mend;
+        return;
+    }
+
+    if(val <= mstart_frac || val > mend_frac)
+        return;
+
+    float modified = (val - mstart_frac) / (mend_frac - mstart_frac);
+
+    accumulator = mix(mstart, mend, modified);
+}
 
 template<int N, typename T>
 inline vec<N, T> slerp(const vec<N, T>& v1, const vec<N, T>& v2, float a)
