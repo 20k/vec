@@ -328,9 +328,9 @@ struct vec
         return sqrt(l);
     }
 
-    float sum() const
+    T sum() const
     {
-        float accum = 0;
+        T accum = 0;
 
         for(int i=0; i<N; i++)
         {
@@ -340,9 +340,9 @@ struct vec
         return accum;
     }
 
-    float sum_absolute() const
+    T sum_absolute() const
     {
-        float accum = 0;
+        T accum = 0;
 
         for(int i=0; i<N; i++)
         {
@@ -352,9 +352,9 @@ struct vec
         return accum;
     }
 
-    float max_elem() const
+    T max_elem() const
     {
-        float val = -FLT_MAX;
+        T val = -FLT_MAX;
 
         for(const auto& s : v)
         {
@@ -365,9 +365,9 @@ struct vec
         return val;
     }
 
-    float min_elem() const
+    T min_elem() const
     {
-        float val = FLT_MAX;
+        T val = FLT_MAX;
 
         for(const auto& s : v)
         {
