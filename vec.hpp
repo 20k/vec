@@ -1701,7 +1701,7 @@ vec<N, T> cosint3(const vec<N, T>& v1, const vec<N, T>& mid, const vec<N, T>& v2
 inline
 vec<N, T> rejection(const vec<N, T>& v1, const vec<N, T>& v2)
 {
-    /*vec<N, T> me_to_them = v2 - v1;
+    vec<N, T> me_to_them = v2 - v1;
 
     me_to_them = me_to_them.norm();
 
