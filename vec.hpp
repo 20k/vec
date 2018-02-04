@@ -2782,6 +2782,30 @@ struct quaternion
 };
 
 inline
+vec3f rot_quat(vec3f point, quaternion q)
+{
+    q = q.norm();
+
+    vec3f t = 2.f * cross(q.q.xyz(), point);
+
+    return point + q.q.w() * t + cross(q.q.xyz(), t);
+}
+
+inline
+vec3f back_rot_quat(vec3f point, quaternion q)
+{
+    vec4f conj = q.q;
+
+    conj.xyz() = -conj.xyz();
+
+    //float len = fast_length(conj);
+
+    float len_sq = dot(conj, conj);
+
+    return rot_quat(point, {conj / len_sq});
+}
+
+inline
 quaternion look_at_quat(vec3f forw, vec3f up)
 {
     forw = forw.norm();
