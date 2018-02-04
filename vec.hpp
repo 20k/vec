@@ -36,7 +36,7 @@ struct vec
         {
             int i = 0;
 
-            for(i=0; i<init.size(); i++)
+            for(i=0; i<(int)init.size(); i++)
             {
                 v[i] = *(init.begin() + i);
             }
@@ -2174,6 +2174,7 @@ struct mat
 
     ///fix the nan
     ///nanananananananana batman
+    ///i'm pretty sure this doesn't work
     vec3f get_rotation()
     {
         vec3f rotation;
@@ -2183,12 +2184,12 @@ struct mat
         float s2 = -v[0][2];
 
         ///so... s2 might be broken if we're here?
-        bool ruh_roh = s2 < -0.995 || s2 >= 0.995;
+        //bool ruh_roh = s2 < -0.995 || s2 >= 0.995;
 
         float possible_t1_1 = asin(s2);
         //float possible_t1_2 = M_PI - asin(s2);
 
-        float cp1 = cos(possible_t1_1);
+        //float cp1 = cos(possible_t1_1);
         //float cp2 = cos(possible_t1_2);
 
         ///should really handle the 0/0 / 0/0 case
