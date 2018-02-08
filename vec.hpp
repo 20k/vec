@@ -1460,6 +1460,18 @@ inline vec<2, float> xy_to_vec(const U& xyz)
     return ret;
 }
 
+template<typename U>
+inline vec<3, float> bt_xyz_to_vec(const U& xyz)
+{
+    vec<3, float> ret;
+
+    ret.v[0] = xyz.getX();
+    ret.v[1] = xyz.getY();
+    ret.v[2] = xyz.getZ();
+
+    return ret;
+}
+
 template<typename U, typename T, int N>
 inline vec<N, T> conv(const vec<N, U>& v1)
 {
