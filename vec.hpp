@@ -23,6 +23,8 @@ struct vec
 {
     T v[N] = {};
 
+    static constexpr int DIM = N;
+
     constexpr vec(std::initializer_list<T> init)
     {
         if(init.size() == 1)
