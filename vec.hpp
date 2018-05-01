@@ -914,6 +914,22 @@ bool any_nan(const vec<N, T>& v)
     return false;
 }
 
+inline
+std::pair<vec2f, vec2f> points_to_rect(vec2f start, vec2f fin)
+{
+    vec2f tl = {std::min(start.x(), fin.x()), std::min(start.y(), fin.y())};
+    vec2f br = {std::max(start.x(), fin.x()), std::max(start.y(), fin.y())};
+
+    return {tl, br};
+}
+
+inline
+bool rect_intersect(vec2f a1, vec2f a2, vec2f b1, vec2f b2)
+{
+    return a1.x() < b2.x() && a2.x() > b1.x() &&
+           a1.y() < b2.y() && a2.y() > b1.y();
+}
+
 template<int N, typename T>
 inline
 vec<N, T> randf(float M, float MN)
