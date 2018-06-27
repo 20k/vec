@@ -1893,6 +1893,7 @@ float circle_minimum_distance(float v1, float v2)
         return v2 - v1 + M_PI*2.f;
     }
 
+    return 0.f;
     //float result = std::min(d1, std::min(d2, d3));
 }
 
