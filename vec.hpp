@@ -1080,6 +1080,42 @@ uint32_t rgba_to_uint(const vec<3, float>& rgb)
     return rgba_to_uint((vec4f){rgb.v[0], rgb.v[1], rgb.v[2], 1.f});
 }
 
+///https://chilliant.blogspot.com/2012/08/srgb-approximations-for-hlsl.html
+template<int N, typename T>
+inline
+vec<N, T> srgb_to_lin(const vec<N, T>& in)
+{
+    auto ret = in;
+
+    for(int i=0; i < N; i++)
+    {
+        if(in.v[i] < 0.04045)
+            ret.v[i] = in.v[i] / 12.92;
+        else
+            ret.v[i] = pow((in.v[i] + 0.055) / 1.055, 2.4);
+    }
+
+    return ret;
+}
+
+template<int N, typename T>
+inline
+vec<N, T> lin_to_srgb(const vec<N, T>& in)
+{
+    auto ret = in;
+
+    for(int i=0; i < N; i++)
+    {
+        if(in[i] <= 0.0031308)
+            ret[i] = in.v[i] * 12.92;
+        else
+            ret[i] = 1.055 * pow(in[i], 1.0 / 2.4) - 0.055;
+    }
+
+    return ret;
+}
+
+
 inline vec3f rot(const vec3f& p1, const vec3f& pos, const vec3f& rot)
 {
     return p1.rot(pos, rot);
