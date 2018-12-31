@@ -1107,9 +1107,9 @@ vec<N, T> lin_to_srgb(const vec<N, T>& in)
     for(int i=0; i < N; i++)
     {
         if(in[i] <= 0.0031308)
-            ret[i] = in.v[i] * 12.92;
+            ret.v[i] = in.v[i] * 12.92;
         else
-            ret[i] = 1.055 * pow(in[i], 1.0 / 2.4) - 0.055;
+            ret.v[i] = 1.055 * pow(in[i], 1.0 / 2.4) - 0.055;
     }
 
     return ret;
