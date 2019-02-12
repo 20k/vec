@@ -1982,6 +1982,19 @@ template <typename T> int signum(T val) {
     return (T(0) < val) - (val < T(0));
 }
 
+template<int N, typename T>
+vec<N, T> signum(const vec<N, T>& in)
+{
+    vec<N, T> ret;
+
+    for(int i=0; i < N; i++)
+    {
+        ret.v[i] = signum(in.v[i]);
+    }
+
+    return ret;
+}
+
 ///don't want to have to include all of algorithm for just this function
 template<class T>
 const T& max(const T& a, const T& b)
