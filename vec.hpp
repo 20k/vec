@@ -527,7 +527,7 @@ struct vec
         return {nx, ny};
     }
 
-    T angle()
+    T angle() const
     {
         return atan2(v[1], v[0]);
     }
