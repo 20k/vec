@@ -510,7 +510,7 @@ struct vec
 
     ///only valid for a 2-vec
     ///need to rejiggle the templates to work this out
-    vec<2, T> rot(T rot_angle)
+    vec<2, T> rot(T rot_angle) const
     {
         T len = length();
 
@@ -1427,22 +1427,6 @@ vec3f aa_to_euler(const vec3f& axis, float angle)
 	return {attitude, heading, bank};
 }
 
-template<int N, typename T>
-inline
-vec<N, T> clamp_angle(const vec<N, T>& in_vector, const vec<N, T>& direction, float max_angle)
-{
-    vec<N, T> evector = in_vector;
-
-    if(fabs(angle_between_vectors(direction, evector)) > max_angle)
-    {
-        T angle_signed = signed_angle_between_vectors(direction, evector);
-
-        evector = direction.rot(signum(angle_signed) * max_angle);
-    }
-
-    return evector;
-}
-
 template<typename U>
 inline vec<4, float> rgba_to_vec(const U& rgba)
 {
@@ -2010,6 +1994,23 @@ vec<N, T> signum(const vec<N, T>& in)
 
     return ret;
 }
+
+template<int N, typename T>
+inline
+vec<N, T> clamp_angle(const vec<N, T>& in_vector, const vec<N, T>& direction, float max_angle)
+{
+    vec<N, T> evector = in_vector;
+
+    if(fabs(angle_between_vectors(direction, evector)) > max_angle)
+    {
+        T angle_signed = signed_angle_between_vectors(direction, evector);
+
+        evector = direction.rot(signum(angle_signed) * max_angle);
+    }
+
+    return evector;
+}
+
 
 ///don't want to have to include all of algorithm for just this function
 template<class T>
