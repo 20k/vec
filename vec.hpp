@@ -1824,7 +1824,7 @@ template<int N, typename T>
 inline
 vec<N, T> reflect(const vec<N, T>& v1, const vec<N, T>& normal)
 {
-    return v1.norm() - 2.f * dot(v1.norm(), normal.norm()) * normal.norm();
+    return (v1.norm() - 2.f * dot(v1.norm(), normal.norm()) * normal.norm()) * v1.norm() * v1.length();
 }
 
 template<int N, typename T>
