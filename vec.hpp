@@ -2005,7 +2005,7 @@ vec<N, T> clamp_angle(const vec<N, T>& in_vector, const vec<N, T>& direction, fl
     {
         T angle_signed = signed_angle_between_vectors(direction, evector);
 
-        evector = direction.rot(signum(angle_signed) * max_angle);
+        evector = direction.rot(signum(angle_signed) * max_angle) * evector.length();
     }
 
     return evector;
