@@ -1427,6 +1427,22 @@ vec3f aa_to_euler(const vec3f& axis, float angle)
 	return {attitude, heading, bank};
 }
 
+template<int N, typename T>
+inline
+vec<N, T> clamp_angle(const vec<N, T>& in_vector, const vec<N, T>& direction, float max_angle)
+{
+    vec<N, T> evector = in_vector;
+
+    if(fabs(angle_between_vectors(direction, evector)) > max_angle)
+    {
+        T angle_signed = signed_angle_between_vectors(direction, evector);
+
+        evector = direction.rot(signum(angle_signed) * max_angle);
+    }
+
+    return evector;
+}
+
 template<typename U>
 inline vec<4, float> rgba_to_vec(const U& rgba)
 {
