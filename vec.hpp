@@ -1994,6 +1994,19 @@ bool rect_circle_intersect(vec2f rect_pos, vec2f rect_half_dim, vec2f circle_pos
     float dist_sq = dist.squared_length();
 
     return dist_sq < circle_rad * circle_rad;
+
+    /*vec2f circle_distance = fabs(circle_pos - rect_pos);
+
+
+    if (circle_distance.x() > (rect_half_dim.x() + circle_rad)) { return false; }
+    if (circle_distance.y() > (rect_half_dim.y() + circle_rad)) { return false; }
+
+    if (circle_distance.x() <= (rect_half_dim.x())) { return true; }
+    if (circle_distance.y() <= (rect_half_dim.y())) { return true; }
+
+    float corner_distance_sq = (circle_distance - rect_half_dim).squared_length();
+
+    return (corner_distance_sq <= (circle_rad*circle_rad));*/
 }
 
 inline
