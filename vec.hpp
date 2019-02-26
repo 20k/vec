@@ -2006,7 +2006,7 @@ bool rect_circle_intersect(vec2f rect_pos, vec2f rect_half_dim, vec2f circle_pos
 
     float corner_distance_sq = (circle_distance - rect_half_dim).squared_length();
 
-    return (corner_distance_sq <= (circle_rad*circle_rad));*/
+    return corner_distance_sq <= circle_rad*circle_rad;*/
 }
 
 inline
