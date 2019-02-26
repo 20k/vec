@@ -1997,7 +1997,7 @@ bool rect_circle_intersect(vec2f rect_pos, vec2f rect_half_dim, vec2f circle_pos
 }
 
 inline
-bool rect_lies_inside_doughnut(vec2f rect_pos, vec2f rect_half_dim, vec2f circle_pos, float rad_1, float rad_2)
+bool rect_intersects_doughnut(vec2f rect_pos, vec2f rect_half_dim, vec2f circle_pos, float rad_1, float rad_2)
 {
     ///so if it intersects with the larger circle, the only failure case is that all the points lie solely within
     ///the smaller circle
@@ -2012,10 +2012,10 @@ bool rect_lies_inside_doughnut(vec2f rect_pos, vec2f rect_half_dim, vec2f circle
     vec2f rbl = bl - circle_pos;
     vec2f rbr = br - circle_pos;
 
-    if(rtl.squared_length() < rad_2 * rad_2 &&
-       rtr.squared_length() < rad_2 * rad_2 &&
-       rbl.squared_length() < rad_2 * rad_2 &&
-       rbr.squared_length() < rad_2 * rad_2)
+    if(rtl.squared_length() < rad_1 * rad_1 &&
+       rtr.squared_length() < rad_1 * rad_1 &&
+       rbl.squared_length() < rad_1 * rad_1 &&
+       rbr.squared_length() < rad_1 * rad_1)
         return false;
 
     return rect_circle_intersect(rect_pos, rect_half_dim, circle_pos, rad_2);
