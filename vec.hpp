@@ -1388,7 +1388,6 @@ inline vec<N, T> axis_angle(const vec<N, T>& v, const vec<N, T>& axis, float ang
     return cos(angle) * v + sin(angle) * cross(axis, v) + (1.f - cos(angle)) * dot(axis, v) * axis;
 }
 
-
 inline
 vec3f aa_to_euler(const vec3f& axis, float angle)
 {
@@ -1980,6 +1979,46 @@ vec<2, T> point2line_intersection(const vec<2, T>& p1, const vec<2, T>& p2, cons
     }
 
     return {xp, yp};
+}
+
+///https://stackoverflow.com/questions/401847/circle-rectangle-collision-detection-intersection
+inline
+bool rect_circle_intersect(vec2f rect_pos, vec2f rect_half_dim, vec2f circle_pos, float circle_rad)
+{
+    vec2f rtl = rect_pos - rect_half_dim;
+    vec2f rbr = rect_pos + rect_half_dim;
+
+    vec2f clpos = clamp(circle_pos, rtl, rbr);
+    vec2f dist = circle_pos - clpos;
+
+    float dist_sq = dist.squared_length();
+
+    return dist_sq < circle_rad * circle_rad;
+}
+
+inline
+bool rect_lies_inside_doughnut(vec2f rect_pos, vec2f rect_half_dim, vec2f circle_pos, float rad_1, float rad_2)
+{
+    ///so if it intersects with the larger circle, the only failure case is that all the points lie solely within
+    ///the smaller circle
+
+    vec2f tl = rect_pos - rect_half_dim;
+    vec2f tr = rect_pos + (vec2f){rect_half_dim.x(), -rect_half_dim.y()};
+    vec2f bl = rect_pos + (vec2f){-rect_half_dim.x(), rect_half_dim.y()};
+    vec2f br = rect_pos + rect_half_dim;
+
+    vec2f rtl = tl - circle_pos;
+    vec2f rtr = tr - circle_pos;
+    vec2f rbl = bl - circle_pos;
+    vec2f rbr = br - circle_pos;
+
+    if(rtl.squared_length() < rad_2 * rad_2 &&
+       rtr.squared_length() < rad_2 * rad_2 &&
+       rbl.squared_length() < rad_2 * rad_2 &&
+       rbr.squared_length() < rad_2 * rad_2)
+        return false;
+
+    return rect_circle_intersect(rect_pos, rect_half_dim, circle_pos, rad_2);
 }
 
 ///https://stackoverflow.com/questions/1560492/how-to-tell-whether-a-point-is-to-the-right-or-left-side-of-a-line
