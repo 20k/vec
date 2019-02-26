@@ -1963,8 +1963,21 @@ vec<2, T> point2line_intersection(const vec<2, T>& p1, const vec<2, T>& p2, cons
     float y3 = p3.y();
     float y4 = p4.y();
 
-    float xp = ((x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)) / ((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4));
-    float yp = ((x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)) / ((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4));
+    float div = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+
+    float xp = (x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4);
+    float yp = (x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4);
+
+    if(fabs(div) <= 0.001)
+    {
+        xp = 0;
+        yp = 0;
+    }
+    else
+    {
+        xp /= div;
+        yp /= div;
+    }
 
     return {xp, yp};
 }
