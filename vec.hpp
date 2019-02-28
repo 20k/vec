@@ -2025,10 +2025,12 @@ bool rect_intersects_doughnut(vec2f rect_pos, vec2f rect_half_dim, vec2f circle_
     vec2f rbl = bl - circle_pos;
     vec2f rbr = br - circle_pos;
 
-    if(rtl.squared_length() < rad_1 * rad_1 &&
-       rtr.squared_length() < rad_1 * rad_1 &&
-       rbl.squared_length() < rad_1 * rad_1 &&
-       rbr.squared_length() < rad_1 * rad_1)
+    float rad_sq = rad_1 * rad_1;
+
+    if(rtl.squared_length() < rad_sq &&
+       rtr.squared_length() < rad_sq &&
+       rbl.squared_length() < rad_sq &&
+       rbr.squared_length() < rad_sq)
         return false;
 
     return rect_circle_intersect(rect_pos, rect_half_dim, circle_pos, rad_2);
