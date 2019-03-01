@@ -1186,6 +1186,14 @@ T signed_angle_between_vectors(const vec<N, T>& v1, const vec<N, T>& v2)
     return angle;
 }
 
+///cos_angle must be [0, 1]
+template<int N, typename T>
+inline
+bool angle_lies_between_vectors_cos(const vec<N, T>& v1, const vec<N, T>& v2, float cos_angle)
+{
+    return dot(v1.norm(), v2.norm()) >= cos_angle;
+}
+
 template<int N, typename T>
 inline vec<N, T> operator-(const vec<N, T>& v1)
 {
