@@ -1191,7 +1191,7 @@ template<int N, typename T>
 inline
 bool angle_lies_between_vectors_cos(const vec<N, T>& v1, const vec<N, T>& v2, float cos_angle)
 {
-    return dot(v1.norm(), v2.norm()) >= cos_angle;
+    return dot(v1, v2) >= cos_angle;
 }
 
 template<int N, typename T>
