@@ -1228,6 +1228,9 @@ bool angle_lies_between_vectors_cos(const vec<N, T>& v1, const vec<N, T>& v2_nor
 
     return sign_top * (top * top / bot) >= sign_bot * cos_angle * cos_angle;*/
 
+    if(cos_angle == -1)
+        return true;
+
     return dot(v1, v2_normalised) >= cos_angle;
 }
 
