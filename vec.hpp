@@ -1060,6 +1060,25 @@ vec<N, T> pow(const vec<N, T>& v1, const vec<N, U>& p)
     return ret;
 }
 
+///nicked off stackoverflow
+template <typename T> int signum(T val) {
+    return (T(0) < val) - (val < T(0));
+}
+
+template<int N, typename T>
+vec<N, T> signum(const vec<N, T>& in)
+{
+    vec<N, T> ret;
+
+    for(int i=0; i < N; i++)
+    {
+        ret.v[i] = signum(in.v[i]);
+    }
+
+    return ret;
+}
+
+
 ///0 -> 1, returns packed RGBA uint
 inline
 uint32_t rgba_to_uint(const vec<4, float>& rgba)
@@ -1189,9 +1208,27 @@ T signed_angle_between_vectors(const vec<N, T>& v1, const vec<N, T>& v2)
 ///cos_angle must be [0, 1]
 template<int N, typename T>
 inline
-bool angle_lies_between_vectors_cos(const vec<N, T>& v1, const vec<N, T>& v2, float cos_angle)
+bool angle_lies_between_vectors_cos(const vec<N, T>& v1, const vec<N, T>& v2_normalised, float cos_angle)
 {
-    return dot(v1, v2) >= cos_angle;
+    ///dot(a, b) = |a| |b| cos t
+
+    ///trying to eliminate the normalisation of a, in this case b is always normalised
+    ///dot(a, b) ^ 2 = (|a| * |b| * cos t) ^ 2
+    ///dot(a, b) ^ 2 = |a|^2 * |b|^2 * (cos t)^2
+    ///dot(a, b) ^ 2 = |a|^2 * |b|^2 * (cos t)^2
+    ///so in my case, |b|^2 = 1
+    ///dot(a, b) ^ 2 = |a|^2 * (cos t)^2
+    ///(dot(a, b) ^ 2) / (|a|^2) = (cos t) ^ 2
+
+    /*float top = dot(v1, v2_normalised);
+    float bot = v1.squared_length();
+
+    float sign_top = signum(top);
+    float sign_bot = signum(cos_angle);
+
+    return sign_top * (top * top / bot) >= sign_bot * cos_angle * cos_angle;*/
+
+    return dot(v1, v2_normalised) >= cos_angle;
 }
 
 template<int N, typename T>
@@ -2050,24 +2087,6 @@ inline
 bool is_left_side(const vec<2, T>& l1, const vec<2, float>& l2, const vec<2, float>& lp)
 {
     return ((l2.v[0] - l1.v[0]) * (lp.v[1] - l1.v[1]) - (l2.v[1] - l1.v[1]) * (lp.v[0] - l1.v[0])) > 0;
-}
-
-///nicked off stackoverflow
-template <typename T> int signum(T val) {
-    return (T(0) < val) - (val < T(0));
-}
-
-template<int N, typename T>
-vec<N, T> signum(const vec<N, T>& in)
-{
-    vec<N, T> ret;
-
-    for(int i=0; i < N; i++)
-    {
-        ret.v[i] = signum(in.v[i]);
-    }
-
-    return ret;
 }
 
 template<int N, typename T>
