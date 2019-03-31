@@ -3,12 +3,10 @@
 
 #include <math.h>
 #include <algorithm>
-#include <functional>
 #include <initializer_list>
-#include <iostream>
+#include <ostream>
 #include <float.h>
 #include <random>
-//#include <functional>
 
 #define M_PI		3.14159265358979323846
 #define M_PIf ((float)M_PI)
@@ -272,8 +270,8 @@ struct vec
         return r;
     }
 
-    template<typename U>
-    vec<N, U> map(std::function<U(T)> func)
+    template<typename U, typename V>
+    vec<N, U> map(V func)
     {
         vec<N, U> ret;
 
