@@ -48,6 +48,14 @@ struct vec
         }
     }
 
+    vec(const vec<N, T>& in)
+    {
+        for(int i=0; i < N; i++)
+        {
+            v[i] = in.v[i];
+        }
+    }
+
     T& x()
     {
         return v[0];
