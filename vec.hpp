@@ -2035,6 +2035,13 @@ vec<2, T> point2line_intersection(const vec<2, T>& p1, const vec<2, T>& p2, cons
     return {xp, yp};
 }
 
+template<typename T>
+inline
+float point2circle_shortest_distance(const vec<2, T>& centre, float radius, const vec<2, T>& point)
+{
+    return fabs((point - centre).length() - radius);
+}
+
 ///https://stackoverflow.com/questions/401847/circle-rectangle-collision-detection-intersection
 inline
 bool rect_circle_intersect(vec2f rect_pos, vec2f rect_half_dim, vec2f circle_pos, float circle_rad)
