@@ -48,13 +48,15 @@ struct vec
         }
     }
 
-    vec(const vec<N, T>& in)
+    constexpr vec(const vec<N, T>& in)
     {
         for(int i=0; i < N; i++)
         {
             v[i] = in.v[i];
         }
     }
+
+    constexpr vec<N, T>& operator=(const vec<N, T>& in) = default;
 
     T& x()
     {
