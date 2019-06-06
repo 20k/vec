@@ -1634,10 +1634,9 @@ inline vec<N, T> d2r(const vec<N, T>& v1)
     return ret;
 }
 
-template<typename T>
-inline T d2r(const T& v1)
+inline float d2r(const float& v1)
 {
-    T ret = (v1 / 360.f) * M_PI * 2;
+    float ret = (v1 / 360.f) * M_PI * 2;
 
     return ret;
 }
