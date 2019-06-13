@@ -7,6 +7,8 @@
 #include <ostream>
 #include <float.h>
 #include <random>
+#include <utility>
+//#include <array>
 
 #define M_PI		3.14159265358979323846
 #define M_PIf ((float)M_PI)
@@ -19,40 +21,60 @@
 template<int N, typename T>
 struct vec
 {
-    T v[N] = {};
+    std::array<T, N> v;
 
     static constexpr int DIM = N;
 
-    constexpr vec(std::initializer_list<T> init)
+    template<std::size_t... Is, typename... U>
+    void _init(std::index_sequence<Is...>, const U&... t)
     {
-        if(init.size() == 1)
-        {
-            for(int i=0; i<N; i++)
-            {
-                v[i] = *(init.begin());
-            }
-        }
-        else
-        {
-            int i = 0;
+        ((std::get<Is>(v) = t), ...);
+    }
 
-            for(i=0; i<(int)init.size(); i++)
-            {
-                v[i] = *(init.begin() + i);
-            }
+    template<typename... U>
+    void _init_wrapper(const U&... args)
+    {
+        std::index_sequence_for<U...> iseq;
 
-            for(; i<N; i++)
-            {
-                v[i] = T();
-            }
+        _init(iseq, args...);
+
+        for(int i=sizeof...(U); i < N; i++)
+        {
+            v[i] = 0;
         }
     }
 
-    constexpr vec(const vec<N, T>& in)
+    template<int K, typename U>
+    void _init_wrapper(const vec<K, U>& other)
     {
-        for(int i=0; i < N; i++)
+        constexpr int fmin = N < K ? N : K;
+        constexpr int fmax = N > K ? N : K;
+
+        for(int i=0; i < fmin; i++)
         {
-            v[i] = in.v[i];
+            v[i] = other.v[i];
+        }
+
+        for(int i=fmin; i < fmax; i++)
+        {
+            v[i] = 0;
+        }
+    }
+
+    ///use a fold expression to init
+    template<typename... U>
+    constexpr vec(const U&... args)
+    {
+        _init_wrapper(args...);
+    }
+
+    constexpr vec(T&& t)
+    {
+        v[0] = t;
+
+        for(int i=1; i < N; i++)
+        {
+            v[i] = T();
         }
     }
 
