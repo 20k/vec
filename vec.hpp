@@ -34,30 +34,21 @@ struct vec
     template<typename... U>
     void _init_wrapper(const U&... args)
     {
+        static_assert(sizeof...(U) == N, "Cannot initialise a vector from a different size");
+
         std::index_sequence_for<U...> iseq;
 
         _init(iseq, args...);
-
-        for(int i=sizeof...(U); i < N; i++)
-        {
-            v[i] = 0;
-        }
     }
 
     template<int K, typename U>
     void _init_wrapper(const vec<K, U>& other)
     {
-        constexpr int fmin = N < K ? N : K;
-        constexpr int fmax = N > K ? N : K;
+        static_assert(N == K, "Cannot initialise a vector from a different size");
 
-        for(int i=0; i < fmin; i++)
+        for(int i=0; i < N; i++)
         {
             v[i] = other.v[i];
-        }
-
-        for(int i=fmin; i < fmax; i++)
-        {
-            v[i] = 0;
         }
     }
 
