@@ -3,12 +3,11 @@
 
 #include <math.h>
 #include <algorithm>
-#include <initializer_list>
 #include <ostream>
 #include <float.h>
 #include <random>
 #include <utility>
-//#include <array>
+#include <array>
 
 #define M_PI		3.14159265358979323846
 #define M_PIf ((float)M_PI)
