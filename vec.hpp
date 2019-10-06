@@ -58,7 +58,7 @@ struct vec
         _init_wrapper(args...);
     }
 
-    constexpr vec(T&& t)
+    /*constexpr vec(T&& t)
     {
         v[0] = t;
 
@@ -66,7 +66,7 @@ struct vec
         {
             v[i] = T();
         }
-    }
+    }*/
 
     constexpr vec<N, T>& operator=(const vec<N, T>& in) = default;
 
