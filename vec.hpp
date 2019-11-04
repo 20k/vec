@@ -997,7 +997,7 @@ vec<N, T> randf()
 inline
 float rand_det_s(std::minstd_rand& rnd, float M, float MN)
 {
-    float scaled = (rnd() - rnd.min()) / (float)(rnd.max() - rnd.min());
+    float scaled = (rnd() - rnd.min()) / (float)(rnd.max() - rnd.min() + 1.f);
 
     return scaled * (MN - M) + M;
 }
