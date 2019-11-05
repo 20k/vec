@@ -25,13 +25,13 @@ struct vec
     static constexpr int DIM = N;
 
     template<std::size_t... Is, typename... U>
-    void _init(std::index_sequence<Is...>, const U&... t)
+    constexpr void _init(std::index_sequence<Is...>, const U&... t)
     {
         ((std::get<Is>(v) = t), ...);
     }
 
     template<typename... U>
-    void _init_wrapper(const U&... args)
+    constexpr void _init_wrapper(const U&... args)
     {
         static_assert(sizeof...(U) == N, "Cannot initialise a vector from a different size");
 
@@ -41,19 +41,16 @@ struct vec
     }
 
     template<int K, typename U>
-    void _init_wrapper(const vec<K, U>& other)
+    constexpr void _init_wrapper(const vec<K, U>& other)
     {
         static_assert(N == K, "Cannot initialise a vector from a different size");
 
-        for(int i=0; i < N; i++)
-        {
-            v[i] = other.v[i];
-        }
+        v = other.v;
     }
 
     ///use a fold expression to init
     template<typename... U>
-    constexpr vec(const U&... args)
+    constexpr vec(const U&... args) : v{}
     {
         _init_wrapper(args...);
     }
@@ -152,15 +149,12 @@ struct vec
     }
 
     ///lets modernise the code a little
-    vec()
+    constexpr vec() : v{}
     {
-        for(int i=0; i<N; i++)
-        {
-            v[i] = T();
-        }
+
     }
 
-    vec(T val)
+    constexpr vec(T val)
     {
         for(int i=0; i<N; i++)
         {
@@ -178,7 +172,7 @@ struct vec
         return *this;
     }
 
-    vec<N, T> operator+(const vec<N, T>& other) const
+    constexpr vec<N, T> operator+(const vec<N, T>& other) const
     {
         vec<N, T> r;
 
@@ -190,7 +184,7 @@ struct vec
         return r;
     }
 
-    vec<N, T> operator+(T other) const
+    constexpr vec<N, T> operator+(T other) const
     {
         vec<N, T> r;
 
@@ -202,21 +196,21 @@ struct vec
         return r;
     }
 
-    vec<N, T>& operator+=(T other)
+    constexpr vec<N, T>& operator+=(T other)
     {
         *this = *this + other;
 
         return *this;
     }
 
-    vec<N, T>& operator+=(const vec<N, T>& other)
+    constexpr vec<N, T>& operator+=(const vec<N, T>& other)
     {
         *this = *this + other;
 
         return *this;
     }
 
-    vec<N, T> operator-(const vec<N, T>& other) const
+    constexpr vec<N, T> operator-(const vec<N, T>& other) const
     {
         vec<N, T> r;
 
@@ -229,7 +223,7 @@ struct vec
     }
 
 
-    vec<N, T> operator-(T other) const
+    constexpr vec<N, T> operator-(T other) const
     {
         vec<N, T> r;
 
@@ -242,7 +236,7 @@ struct vec
     }
 
 
-    vec<N, T> operator*(const vec<N, T>& other) const
+    constexpr vec<N, T> operator*(const vec<N, T>& other) const
     {
         vec<N, T> r;
 
@@ -256,7 +250,7 @@ struct vec
 
     ///beginnings of making this actually work properly
     template<typename U>
-    vec<N, T> operator*(U other) const
+    constexpr vec<N, T> operator*(U other) const
     {
         vec<N, T> r;
 
@@ -268,7 +262,7 @@ struct vec
         return r;
     }
 
-    vec<N, T> operator/(const vec<N, T>& other) const
+    constexpr vec<N, T> operator/(const vec<N, T>& other) const
     {
         vec<N, T> r;
 
@@ -280,7 +274,7 @@ struct vec
         return r;
     }
 
-    vec<N, T> operator/(T other) const
+    constexpr vec<N, T> operator/(T other) const
     {
         vec<N, T> r;
 
@@ -1139,6 +1133,17 @@ vec<N, T> srgb_to_lin(const vec<N, T>& in)
     return ret;
 }
 
+///thanks to https://chilliant.blogspot.com/2012/08/srgb-approximations-for-hlsl.html for the approximations
+template<int N, typename T>
+inline
+constexpr vec<N, T> srgb_to_lin_approx(const vec<N, T>& in)
+{
+    return
+    0.012522878f * in +
+    0.682171111f * in * in +
+    0.305306011f * in * in * in;
+}
+
 template<int N, typename T>
 inline
 vec<N, T> lin_to_srgb(const vec<N, T>& in)
@@ -1156,6 +1161,16 @@ vec<N, T> lin_to_srgb(const vec<N, T>& in)
     return ret;
 }
 
+template<int N, typename T>
+inline
+constexpr vec<N, T> lin_to_srgb_approx(const vec<N, T>& in)
+{
+    vec<N, T> S1 = sqrtf(in);
+    vec<N, T> S2 = sqrtf(S1);
+    vec<N, T> S3 = sqrtf(S2);
+
+    return 0.662002687f * S1 + 0.684122060f * S2 - 0.323583601f * S3 - 0.0225411470f * in;
+}
 
 inline vec3f rot(const vec3f& p1, const vec3f& pos, const vec3f& rot)
 {
@@ -1255,7 +1270,7 @@ bool angle_lies_between_vectors_cos(const vec<N, T>& v1, const vec<N, T>& v2_nor
 }
 
 template<int N, typename T>
-inline vec<N, T> operator-(const vec<N, T>& v1)
+constexpr inline vec<N, T> operator-(const vec<N, T>& v1)
 {
     vec<N, T> ret;
 
@@ -1268,13 +1283,13 @@ inline vec<N, T> operator-(const vec<N, T>& v1)
 }
 
 template<int N, typename T, typename U>
-inline vec<N, U> operator*(T v, const vec<N, U>& v1)
+constexpr inline vec<N, U> operator*(T v, const vec<N, U>& v1)
 {
     return v1 * v;
 }
 
 template<int N, typename T>
-inline vec<N, T> operator+(T v, const vec<N, T>& v1)
+constexpr inline vec<N, T> operator+(T v, const vec<N, T>& v1)
 {
     return v1 + v;
 }
@@ -1287,7 +1302,7 @@ inline vec<N, T> operator+(T v, const vec<N, T>& v1)
 ///should convert these functions to be N/T
 
 template<int N, typename T>
-inline vec<N, T> operator/(T v, const vec<N, T>& v1)
+constexpr inline vec<N, T> operator/(T v, const vec<N, T>& v1)
 {
     vec<N, T> top;
 
