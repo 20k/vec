@@ -828,51 +828,55 @@ bool operator<(const vec<N, T>& v1, const vec<N, T>& v2)
 }*/
 
 template<int N, typename T>
+inline
 bool operator<(const vec<N, T>& v1, const vec<N, T>& v2)
 {
-    for(int i=0; i<N; i++)
-        if(v1.v[i] >= v2.v[i])
-            return false;
+    static_assert(N > 0);
 
-    return true;
+    for(int i=0; i<N-1; i++)
+    {
+        if(v1.v[i] != v2.v[i])
+            return v1.v[i] < v2.v[i];
+
+    }
+
+    return v1.v[N-1] < v2.v[N-1];
+}
+
+
+template<int N, typename T>
+inline
+bool operator==(const vec<N, T>& v1, const vec<N, T>& v2)
+{
+    return v1.v == v2.v;
 }
 
 template<int N, typename T>
+inline
+bool operator<=(const vec<N, T>& v1, const vec<N, T>& v2)
+{
+    return (v1 < v2) || (v1 == v2);
+}
+
+template<int N, typename T>
+inline
 bool operator>(const vec<N, T>& v1, const vec<N, T>& v2)
 {
-    for(int i=0; i<N; i++)
-        if(v1.v[i] <= v2.v[i])
-            return false;
-
-    return true;
+    return !(v1 <= v2);
 }
 
 template<int N, typename T>
-bool operator== (const vec<N, T>& v1, const vec<N, T>& v2)
-{
-    for(int i=0; i<N; i++)
-        if(v1.v[i] != v2.v[i])
-            return false;
-
-    return true;
-}
-
-template<int N, typename T>
-bool operator>= (const vec<N, T>& v1, const vec<N, T>& v2)
+inline
+bool operator>=(const vec<N, T>& v1, const vec<N, T>& v2)
 {
     return v1 > v2 || v1 == v2;
 }
 
 template<int N, typename T>
-bool operator!= (const vec<N, T>& v1, const vec<N, T>& v2)
+inline
+bool operator!=(const vec<N, T>& v1, const vec<N, T>& v2)
 {
-    for(int i=0; i<N; i++)
-    {
-        if(v1.v[i] != v2.v[i])
-            return true;
-    }
-
-    return false;
+    return !(v1 == v2);
 }
 
 #define V3to4(x) {x.v[0], x.v[1], x.v[2], x.v[3]}
