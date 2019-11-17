@@ -1014,6 +1014,57 @@ vec<N, T> rand_det(std::minstd_rand& rnd, const vec<N, T>& M, const vec<N, T>& M
     return ret;
 }
 
+template<typename T, typename rng>
+inline
+int random_select_with_weights(rng& my_rng, const std::vector<T>& weights)
+{
+    if(weights.size() == 0)
+        throw std::runtime_error("Needs 1+ probabilities");
+
+    float val = rand_det_s(my_rng, 0.f, 1.f);
+
+    std::vector<float> accum;
+    accum.reserve(weights.size());
+
+    float total_probability = 0;
+
+    for(auto i : weights)
+    {
+        total_probability += i;
+        accum.push_back(total_probability);
+    }
+
+    ///so say we have an in vector [0.2, 0.5, 0.1, 0.7]
+    ///we build a vector [0.2, 0.7, 0.8, 1.5]
+    ///and a total probability of 1.5
+
+    if(total_probability > 0.000001f)
+    {
+        for(auto& i : accum)
+        {
+            i = i / total_probability;
+        }
+    }
+
+    ///selects the last element in the case we don't have enough probability
+    ///not really a good solution
+    ///accum.back() is always guaranteed to be 1 though
+    accum.back() = 1;
+
+    ///normalise array, eg divide everything by 1.5
+
+    for(int i=0; i < (int)weights.size(); i++)
+    {
+        float left_probability = (i == 0) ? 0 : weights[i-1];
+        float my_probability = weights[i];
+
+        if(val >= left_probability && val < my_probability)
+            return i;
+    }
+
+    throw std::runtime_error("No probability found, implementation error");
+}
+
 template<int N, typename T, typename U, typename V>
 inline
 vec<N, T> clamp(vec<N, T> v1, U p1, V p2)
