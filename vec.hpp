@@ -317,17 +317,17 @@ struct vec
     {
         T l = squared_length();
 
-        T val = sqrt(l);
+        T val = std::sqrt(l);
 
         return val;
     }
 
     inline
-    T lengthf() const
+    float lengthf() const
     {
         T l = squared_length();
 
-        T val = sqrtf(l);
+        float val = sqrtf(l);
 
         return val;
     }
@@ -884,12 +884,17 @@ bool operator!=(const vec<N, T>& v1, const vec<N, T>& v2)
 typedef vec<4, float> vec4f;
 typedef vec<3, float> vec3f;
 typedef vec<2, float> vec2f;
+typedef vec<1, float> vec1f;
 
+typedef vec<4, double> vec4d;
 typedef vec<3, double> vec3d;
+typedef vec<2, double> vec2d;
+typedef vec<1, double> vec1d;
 
 typedef vec<4, int> vec4i;
 typedef vec<3, int> vec3i;
 typedef vec<2, int> vec2i;
+typedef vec<1, int> vec1i;
 
 template<int N, typename T>
 inline
