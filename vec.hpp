@@ -997,6 +997,10 @@ vec<N, T> randf()
     return ret;
 }
 
+///falls into the pidgeonhole trap
+///and also std::minstd_rand isn't a very good rng, so will be replaced with a T at a later date
+///unfortunately the distributions in <random> are unspecified, so will not get the same results
+///across platforms, making them useless for anything which needs reproducible random numbers, aka everything
 inline
 float rand_det_s(std::minstd_rand& rnd, float M, float MN)
 {
