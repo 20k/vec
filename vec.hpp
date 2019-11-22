@@ -1050,6 +1050,10 @@ int random_select_with_weights(rng& my_rng, const std::vector<T>& weights)
             i = i / total_probability;
         }
     }
+    else
+    {
+        return -1;
+    }
 
     ///selects the last element in the case we don't have enough probability
     ///not really a good solution
