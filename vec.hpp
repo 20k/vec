@@ -196,20 +196,6 @@ struct vec
         return r;
     }
 
-    constexpr vec<N, T>& operator+=(T other)
-    {
-        *this = *this + other;
-
-        return *this;
-    }
-
-    constexpr vec<N, T>& operator+=(const vec<N, T>& other)
-    {
-        *this = *this + other;
-
-        return *this;
-    }
-
     constexpr vec<N, T> operator-(const vec<N, T>& other) const
     {
         vec<N, T> r;
@@ -285,6 +271,63 @@ struct vec
 
         return r;
     }
+
+    constexpr vec<N, T>& operator+=(const vec<N, T>& other)
+    {
+        *this = *this + other;
+
+        return *this;
+    }
+
+    constexpr vec<N, T>& operator-=(const vec<N, T>& other)
+    {
+        *this = *this - other;
+
+        return *this;
+    }
+
+    constexpr vec<N, T>& operator*=(const vec<N, T>& other)
+    {
+        *this = *this * other;
+
+        return *this;
+    }
+
+    constexpr vec<N, T>& operator/=(const vec<N, T>& other)
+    {
+        *this = *this / other;
+
+        return *this;
+    }
+
+    constexpr vec<N, T>& operator+=(T other)
+    {
+        *this = *this + other;
+
+        return *this;
+    }
+
+    constexpr vec<N, T>& operator-=(T other)
+    {
+        *this = *this - other;
+
+        return *this;
+    }
+
+    constexpr vec<N, T>& operator*=(T other)
+    {
+        *this = *this * other;
+
+        return *this;
+    }
+
+    constexpr vec<N, T>& operator/=(T other)
+    {
+        *this = *this / other;
+
+        return *this;
+    }
+
 
     template<typename U, typename V>
     vec<N, U> map(V func)
