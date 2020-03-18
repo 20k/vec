@@ -8,6 +8,7 @@
 #include <random>
 #include <utility>
 #include <array>
+#include <string>
 
 #define M_PI		3.14159265358979323846
 #define M_PIf ((float)M_PI)
@@ -1223,7 +1224,7 @@ uint32_t rgba_to_uint(const vec<4, float>& rgba)
 inline
 uint32_t rgba_to_uint(const vec<3, float>& rgb)
 {
-    return rgba_to_uint((vec4f){rgb.v[0], rgb.v[1], rgb.v[2], 1.f});
+    return rgba_to_uint(vec4f{rgb.v[0], rgb.v[1], rgb.v[2], 1.f});
 }
 
 ///https://chilliant.blogspot.com/2012/08/srgb-approximations-for-hlsl.html
@@ -2106,7 +2107,7 @@ float circle_minimum_distance(float v1, float v2)
     float d2 = fabs(v2 - v1 - M_PI*2.f);
     float d3 = fabs(v2 - v1 + M_PI*2.f);
 
-    vec3f v = (vec3f){d1, d2, d3};
+    vec3f v = vec3f{d1, d2, d3};
 
     if(v.which_element_minimum() == 0)
     {
@@ -2216,8 +2217,8 @@ bool rect_intersects_doughnut(vec2f rect_pos, vec2f rect_half_dim, vec2f circle_
     ///the smaller circle
 
     vec2f tl = rect_pos - rect_half_dim;
-    vec2f tr = rect_pos + (vec2f){rect_half_dim.x(), -rect_half_dim.y()};
-    vec2f bl = rect_pos + (vec2f){-rect_half_dim.x(), rect_half_dim.y()};
+    vec2f tr = rect_pos + vec2f{rect_half_dim.x(), -rect_half_dim.y()};
+    vec2f bl = rect_pos + vec2f{-rect_half_dim.x(), rect_half_dim.y()};
     vec2f br = rect_pos + rect_half_dim;
 
     vec2f rtl = tl - circle_pos;
