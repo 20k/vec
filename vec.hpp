@@ -597,7 +597,7 @@ struct vec
 
         vec<3, T> dir = *this;
 
-        float cangle = dot((vec<3, T>){0, 1, 0}, dir.norm());
+        float cangle = dot(vec<3, T>{0, 1, 0}, dir.norm());
 
         float angle2 = acos(cangle);
 
@@ -2045,7 +2045,7 @@ inline std::vector<vec3f> sort_anticlockwise(const T& in, const vec3f& about, st
 
     vec3f centre_point = about.back_rot(0.f, euler);
 
-    vec2f centre_2d = (vec2f){centre_point.v[0], centre_point.v[2]};
+    vec2f centre_2d = vec2f{centre_point.v[0], centre_point.v[2]};
 
     for(int i=0; i<num; i++)
     {
@@ -2053,7 +2053,7 @@ inline std::vector<vec3f> sort_anticlockwise(const T& in, const vec3f& about, st
 
         vec3f rotated = vec_pos.back_rot(0.f, euler);
 
-        vec2f rot_2d = (vec2f){rotated.v[0], rotated.v[2]};
+        vec2f rot_2d = vec2f{rotated.v[0], rotated.v[2]};
 
         vec2f rel = rot_2d - centre_2d;
 
