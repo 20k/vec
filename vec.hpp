@@ -1045,17 +1045,18 @@ vec<N, T> randf()
 ///and also std::minstd_rand isn't a very good rng, so will be replaced with a T at a later date
 ///unfortunately the distributions in <random> are unspecified, so will not get the same results
 ///across platforms, making them useless for anything which needs reproducible random numbers, aka everything
+template<typename T>
 inline
-float rand_det_s(std::minstd_rand& rnd, float M, float MN)
+float rand_det_s(T& rnd, float M, float MN)
 {
     float scaled = (rnd() - rnd.min()) / (float)(rnd.max() - rnd.min() + 1.f);
 
     return scaled * (MN - M) + M;
 }
 
-template<int N, typename T>
+template<int N, typename T, typename U>
 inline
-vec<N, T> rand_det(std::minstd_rand& rnd, const vec<N, T>& M, const vec<N, T>& MN)
+vec<N, T> rand_det(U& rnd, const vec<N, T>& M, const vec<N, T>& MN)
 {
     vec<N, T> ret;
 
