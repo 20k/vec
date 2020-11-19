@@ -1285,6 +1285,28 @@ constexpr vec<N, T> lin_to_srgb_approx(const vec<N, T>& in)
     return 0.662002687f * S1 + 0.684122060f * S2 - 0.323583601f * S3 - 0.0225411470f * in;
 }
 
+template<typename T>
+inline
+constexpr vec<3, T> linear_rgb_to_XYZ(const vec<3, T>& in)
+{
+    float X = 0.4124564f * in.x() + 0.3575761f * in.y() + 0.1804375f * in.z();
+    float Y = 0.2126729f * in.x() + 0.7151522f * in.y() + 0.0721750f * in.z();
+    float Z = 0.0193339f * in.x() + 0.1191920f * in.y() + 0.9503041f * in.z();
+
+    return {X, Y, Z};
+}
+
+template<typename T>
+inline
+constexpr vec<3, T> XYZ_to_linear_rgb(const vec<3, T>& in)
+{
+    float r = 3.2404542f * in.x() + -1.5371385f * in.y() + -0.4985314f * in.z();
+    float g = -0.9692660f * in.x() + 1.8760108f * in.y() + 0.0415560f * in.z();
+    float b = 0.0556434f * in.x() + -0.2040259f * in.y() + 1.0572252f * in.z();
+
+    return {r, g, b};
+}
+
 inline vec3f rot(const vec3f& p1, const vec3f& pos, const vec3f& rot)
 {
     return p1.rot(pos, rot);
