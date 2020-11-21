@@ -359,9 +359,11 @@ struct vec
     inline
     T length() const
     {
+        using namespace std;
+
         T l = squared_length();
 
-        T val = std::sqrt(l);
+        T val = sqrt(l);
 
         return val;
     }
@@ -475,14 +477,17 @@ struct vec
     {
         T len = length();
 
-        if(len < 0.00001f)
+        if constexpr(std::is_arithmetic_v<T>)
         {
-            vec<N, T> ret;
+            if(len < 0.00001f)
+            {
+                vec<N, T> ret;
 
-            for(int i=0; i<N; i++)
-                ret.v[i] = 0.f;
+                for(int i=0; i<N; i++)
+                    ret.v[i] = 0.f;
 
-            return ret;
+                return ret;
+            }
         }
 
         return (*this) / len;
@@ -2876,51 +2881,49 @@ mat3f axis_angle_to_mat(vec3f axis, float angle)
     return m;
 }
 
-struct quaternion
+template<typename T>
+struct quaternion_base
 {
-    vec4f q = {0,0,0,1};
+    vec<4, T> q = {0,0,0,1};
 
-    /*quaternion()
-    {
-        q = {0,0,0,1};
-    }*/
-
-    void load_from_matrix(const mat3f& m)
+    void load_from_matrix(const mat<3, T>& m)
     {
         vec4f l;
 
-        float m00 = m.v[0][0];
-        float m11 = m.v[1][1];
-        float m22 = m.v[2][2];
+        T m00 = m.v[0][0];
+        T m11 = m.v[1][1];
+        T m22 = m.v[2][2];
 
         l.v[3] = sqrt( max( 0.f, 1 + m00 + m11 + m22 ) ) / 2;
         l.v[0] = sqrt( max( 0.f, 1 + m00 - m11 - m22 ) ) / 2;
         l.v[1] = sqrt( max( 0.f, 1 - m00 + m11 - m22 ) ) / 2;
         l.v[2] = sqrt( max( 0.f, 1 - m00 - m11 + m22 ) ) / 2;
 
-        float m21 = m.v[2][1];
-        float m12 = m.v[1][2];
-        float m02 = m.v[0][2];
-        float m20 = m.v[2][0];
-        float m10 = m.v[1][0];
-        float m01 = m.v[0][1];
+        T m21 = m.v[2][1];
+        T m12 = m.v[1][2];
+        T m02 = m.v[0][2];
+        T m20 = m.v[2][0];
+        T m10 = m.v[1][0];
+        T m01 = m.v[0][1];
 
         //int s1 = signum(m21 - m12);
         //int s2 = signum(m02 - m20);
         //int s3 = signum(m10 - m01);
 
-        l.v[0] = std::copysign( l.v[0], m21 - m12 );
-        l.v[1] = std::copysign( l.v[1], m02 - m20 );
-        l.v[2] = std::copysign( l.v[2], m10 - m01 );
+        using namespace std;
+
+        l.v[0] = copysign( l.v[0], m21 - m12 );
+        l.v[1] = copysign( l.v[1], m02 - m20 );
+        l.v[2] = copysign( l.v[2], m10 - m01 );
 
         q = l;
     }
 
     ///this * ret == q
-    quaternion get_difference(quaternion q) const
+    quaternion_base<T> get_difference(quaternion_base<T> q) const
     {
-        mat3f t = get_rotation_matrix();
-        mat3f o = q.get_rotation_matrix();
+        mat<3, T> t = get_rotation_matrix();
+        mat<3, T> o = q.get_rotation_matrix();
 
         ///A*q1 = q2
         ///A = q2 * q1'
@@ -2928,30 +2931,30 @@ struct quaternion
         ///q1 * A = q2
         ///A = q1'q2
 
-        mat3f diff = t.transp() * o;
+        mat<3, T> diff = t.transp() * o;
 
-        quaternion ret;
+        quaternion_base<T> ret;
         ret.load_from_matrix(diff);
 
         return ret;
     }
 
-    void load_from_euler(vec3f _rot)
+    void load_from_euler(vec<3, T> _rot)
     {
-        mat3f mat;
+        mat<3, T> mat;
         mat.load_rotation_matrix(_rot);
 
         load_from_matrix(mat);
     }
 
-    void from_vec(const vec4f& raw)
+    void from_vec(const vec<4, T>& raw)
     {
         q = raw;
     }
 
-    quaternion operator*(const quaternion& other) const
+    quaternion_base<T> operator*(const quaternion_base<T>& other) const
     {
-        quaternion ret;
+        quaternion_base<T> ret;
 
         ret.q.v[0] = q.v[3] * other.q.v[0] + q.v[0] * other.q.v[3] + q.v[1] * other.q.v[2] - q.v[2] * other.q.v[1];
         ret.q.v[1] = q.v[3] * other.q.v[1] + q.v[1] * other.q.v[3] + q.v[2] * other.q.v[0] - q.v[0] * other.q.v[2];
@@ -2970,7 +2973,7 @@ struct quaternion
     ///seems more legit
     ///q1.q * (1.f - t) + q2.q * t, perhaps backwards to what you'd expect
     static
-    quaternion slerp(const quaternion& q1, const quaternion& q2, float t)
+    quaternion_base<T> slerp(const quaternion_base<T>& q1, const quaternion_base<T>& q2, float t)
     {
         float d = dot(q1.q, q2.q);
 
@@ -2978,7 +2981,7 @@ struct quaternion
 
         if(d > threshold)
         {
-            quaternion nq;
+            quaternion_base<T> nq;
 
             nq.q = q1.q * (1.f - t) + q2.q * t;
 
@@ -3014,14 +3017,14 @@ struct quaternion
     }
 
     ///http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToMatrix/
-    mat3f get_rotation_matrix() const
+    mat<3, T> get_rotation_matrix() const
     {
-        mat3f m;
+        mat<3, T> m;
 
-        float qx = q.v[0];
-        float qy = q.v[1];
-        float qz = q.v[2];
-        float qw = q.v[3];
+        T qx = q.v[0];
+        T qy = q.v[1];
+        T qz = q.v[2];
+        T qw = q.v[3];
 
         m.v[0][0] = 1 - 2*qy*qy - 2*qz*qz;
         m.v[0][1] = 2*qx*qy - 2*qz*qw;
@@ -3038,7 +3041,7 @@ struct quaternion
         return m;
     }
 
-    quaternion norm() const
+    quaternion_base<T> norm() const
     {
         /*float w = q.v[3];
 
@@ -3051,16 +3054,16 @@ struct quaternion
 
         return ret;*/
 
-        quaternion ret;
+        quaternion_base<T> ret;
 
         ret.q = q.norm();
 
         return ret;
     }
 
-    quaternion conjugate() const
+    quaternion_base<T> conjugate() const
     {
-        quaternion ret;
+        quaternion_base<T> ret;
 
         ret.q = q;
 
@@ -3071,29 +3074,29 @@ struct quaternion
         return ret;
     }
 
-    quaternion inverse() const
+    quaternion_base<T> inverse() const
     {
-        quaternion conj = conjugate();
+        quaternion_base<T> conj = conjugate();
 
         vec4f l = conj.q / (q.lengthf() * q.lengthf());
 
-        quaternion q;
+        quaternion_base<T> q;
         q.q = l;
 
         return q;
     }
 
-    vec4f to_axis_angle() const
+    vec<4, T> to_axis_angle() const
     {
-        float qx = q.v[0];
-        float qy = q.v[1];
-        float qz = q.v[2];
-        float qw = q.v[3];
+        T qx = q.v[0];
+        T qy = q.v[1];
+        T qz = q.v[2];
+        T qw = q.v[3];
 
-        float angle = 2 * acos(qw);
-        float x = qx / sqrt(1-qw*qw);
-        float y = qy / sqrt(1-qw*qw);
-        float z = qz / sqrt(1-qw*qw);
+        T angle = 2 * acos(qw);
+        T x = qx / sqrt(1-qw*qw);
+        T y = qy / sqrt(1-qw*qw);
+        T z = qz / sqrt(1-qw*qw);
 
         if(qw >= 0.999f)
         {
@@ -3105,7 +3108,7 @@ struct quaternion
         return {x, y, z, angle};
     }
 
-    void load_from_axis_angle(vec4f aa)
+    void load_from_axis_angle(vec<4, T> aa)
     {
         q.v[0] = aa.v[0] * sin(aa.v[3]/2);
         q.v[1] = aa.v[1] * sin(aa.v[3]/2);
@@ -3115,32 +3118,32 @@ struct quaternion
         q = q.norm();
     }
 
-    float x()
+    T x()
     {
        return q.x();
     }
 
-    float y()
+    T y()
     {
        return q.y();
     }
 
-    float z()
+    T z()
     {
        return q.z();
     }
 
-    float w()
+    T w()
     {
        return q.w();
     }
 
-    quaternion identity() const
+    quaternion_base<T> identity() const
     {
         return {{0, 0, 0, 1}};
     }
 
-    friend std::ostream& operator<<(std::ostream& os, const quaternion& v1)
+    friend std::ostream& operator<<(std::ostream& os, const quaternion_base<T>& v1)
     {
         for(int i=0; i<4-1; i++)
         {
@@ -3153,20 +3156,24 @@ struct quaternion
     }
 };
 
+using quaternion = quaternion_base<float>;
+
+template<typename T>
 inline
-vec3f rot_quat(vec3f point, quaternion q)
+vec<3, T> rot_quat(vec<3, T> point, quaternion_base<T> q)
 {
     q = q.norm();
 
-    vec3f t = 2.f * cross(q.q.xyz(), point);
+    vec<3, T> t = 2.f * cross(q.q.xyz(), point);
 
     return point + q.q.w() * t + cross(q.q.xyz(), t);
 }
 
+template<typename T>
 inline
-vec3f back_rot_quat(vec3f point, quaternion q)
+vec<3, T> back_rot_quat(vec<3, T> point, quaternion_base<T> q)
 {
-    vec4f conj = q.q;
+    vec<4, T> conj = q.q;
 
     conj.xyz() = -conj.xyz();
 
