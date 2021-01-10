@@ -3316,6 +3316,74 @@ struct tensor
 
         return index_md_array(data, vals...);
     }
+
+    T det() const
+    {
+        static_assert(sizeof...(N) == 2, "N must be 3");
+        static_assert(((N == 3) && ...));
+
+        T a11 = data[0][0];
+        T a12 = data[0][1];
+        T a13 = data[0][2];
+
+        T a21 = data[1][0];
+        T a22 = data[1][1];
+        T a23 = data[1][2];
+
+        T a31 = data[2][0];
+        T a32 = data[2][1];
+        T a33 = data[2][2];
+
+        return a11*a22*a33 + a21*a32*a13 + a31*a12*a23 - a11*a32*a23 - a31*a22*a13 - a21*a12*a33;
+    }
+
+    tensor<T, N...> invert() const
+    {
+        static_assert(sizeof...(N) == 2);
+        static_assert(((N == 3) && ...));
+
+        T d = det();
+
+        T a11 = data[0][0];
+        T a12 = data[0][1];
+        T a13 = data[0][2];
+
+        T a21 = data[1][0];
+        T a22 = data[1][1];
+        T a23 = data[1][2];
+
+        T a31 = data[2][0];
+        T a32 = data[2][1];
+        T a33 = data[2][2];
+
+        vec3f ir1, ir2, ir3;
+
+        T x0 = (a22 * a33 - a23 * a32) * d;
+        T y0 = (a13 * a32 - a12 * a33) * d;
+        T z0 = (a12 * a23 - a13 * a22) * d;
+
+        T x1 = (a23 * a31 - a21 * a33) * d;
+        T y1 = (a11 * a33 - a13 * a31) * d;
+        T z1 = (a13 * a21 - a11 * a23) * d;
+
+        T x2 = (a21 * a32 - a22 * a31) * d;
+        T y2 = (a12 * a31 - a11 * a32) * d;
+        T z2 = (a11 * a22 - a12 * a21) * d;
+
+        tensor<T, N...> ret;
+
+        ret.idx(0, 0) = x0;
+        ret.idx(0, 1) = y0;
+        ret.idx(0, 2) = z0;
+        ret.idx(1, 0) = x1;
+        ret.idx(1, 1) = y1;
+        ret.idx(1, 2) = z1;
+        ret.idx(2, 0) = x2;
+        ret.idx(2, 1) = y2;
+        ret.idx(2, 2) = z2;
+
+        return ret;
+    }
 };
 
 /*template<typename T>
