@@ -3261,6 +3261,62 @@ mat3f leapquat_to_mat(quaternion q)
 
 typedef quaternion quat;
 
+template<int... N>
+constexpr int N_to_size()
+{
+    return (N * ...);
+}
+
+template<typename T, size_t size, size_t... sizes>
+struct md_array_impl
+{
+    using type = std::array<typename md_array_impl<T, sizes...>::type, size>;
+};
+
+template<typename T, size_t size>
+struct md_array_impl<T, size>
+{
+    using type = std::array<T, size>;
+};
+
+template<typename T, size_t... sizes>
+using md_array = typename md_array_impl<T, sizes...>::type;
+
+template<typename T, typename Next>
+constexpr
+auto& index_md_array(T& arr, Next v)
+{
+    return arr[v];
+}
+
+template<typename T, typename Next, typename... Rest>
+constexpr
+auto& index_md_array(T& arr, Next v, Rest... r)
+{
+    return index_md_array(arr[v], r...);
+}
+
+template<typename T, int... N>
+struct tensor
+{
+    md_array<T, N...> data;
+
+    template<typename... V>
+    T& idx(V... vals)
+    {
+        static_assert(sizeof...(V) == sizeof...(N));
+
+        return index_md_array(data, vals...);
+    }
+
+    template<typename... V>
+    const T& idx(V... vals) const
+    {
+        static_assert(sizeof...(V) == sizeof...(N));
+
+        return index_md_array(data, vals...);
+    }
+};
 
 /*template<typename T>
 vec<3, T> operator*(const mat<3, T> m, const vec<3, T>& other)
