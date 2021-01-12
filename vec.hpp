@@ -68,6 +68,16 @@ struct vec
 
     constexpr vec<N, T>& operator=(const vec<N, T>& in) = default;
 
+    T& operator[](size_t idx)
+    {
+        return v[idx];
+    }
+
+    const T& operator[](size_t idx) const
+    {
+        return v[idx];
+    }
+
     T& x()
     {
         return v[0];
