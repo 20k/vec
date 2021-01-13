@@ -3366,8 +3366,6 @@ struct tensor
         T a32 = data[2][1];
         T a33 = data[2][2];
 
-        vec3f ir1, ir2, ir3;
-
         T x0 = (a22 * a33 - a23 * a32) * d;
         T y0 = (a13 * a32 - a12 * a33) * d;
         T z0 = (a12 * a23 - a13 * a22) * d;
