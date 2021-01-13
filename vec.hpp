@@ -360,7 +360,7 @@ struct vec
 
         for(int i=0; i<N; i++)
         {
-            sqsum += v[i]*v[i];
+            sqsum = sqsum + v[i]*v[i];
         }
 
         return sqsum;
