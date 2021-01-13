@@ -3332,17 +3332,17 @@ struct tensor
         static_assert(sizeof...(N) == 2, "N must be 3");
         static_assert(((N == 3) && ...));
 
-        T a11 = data[0][0];
-        T a12 = data[0][1];
-        T a13 = data[0][2];
+        T a11 = idx(0, 0);
+        T a12 = idx(0, 1);
+        T a13 = idx(0, 2);
 
-        T a21 = data[1][0];
-        T a22 = data[1][1];
-        T a23 = data[1][2];
+        T a21 = idx(1, 0);
+        T a22 = idx(1, 1);
+        T a23 = idx(1, 2);
 
-        T a31 = data[2][0];
-        T a32 = data[2][1];
-        T a33 = data[2][2];
+        T a31 = idx(2, 0);
+        T a32 = idx(2, 1);
+        T a33 = idx(2, 2);
 
         return a11*a22*a33 + a21*a32*a13 + a31*a12*a23 - a11*a32*a23 - a31*a22*a13 - a21*a12*a33;
     }
@@ -3354,17 +3354,17 @@ struct tensor
 
         T d = det();
 
-        T a11 = data[0][0];
-        T a12 = data[0][1];
-        T a13 = data[0][2];
+        T a11 = idx(0, 0);
+        T a12 = idx(0, 1);
+        T a13 = idx(0, 2);
 
-        T a21 = data[1][0];
-        T a22 = data[1][1];
-        T a23 = data[1][2];
+        T a21 = idx(1, 0);
+        T a22 = idx(1, 1);
+        T a23 = idx(1, 2);
 
-        T a31 = data[2][0];
-        T a32 = data[2][1];
-        T a33 = data[2][2];
+        T a31 = idx(2, 0);
+        T a32 = idx(2, 1);
+        T a33 = idx(2, 2);
 
         T x0 = (a22 * a33 - a23 * a32) * d;
         T y0 = (a13 * a32 - a12 * a33) * d;
