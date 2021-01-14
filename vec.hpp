@@ -3347,12 +3347,10 @@ struct tensor
         return a11*a22*a33 + a21*a32*a13 + a31*a12*a23 - a11*a32*a23 - a31*a22*a13 - a21*a12*a33;
     }
 
-    tensor<T, N...> invert() const
+    tensor<T, N...> unit_invert() const
     {
         static_assert(sizeof...(N) == 2);
         static_assert(((N == 3) && ...));
-
-        T d = 1/det();
 
         T a11 = idx(0, 0);
         T a12 = idx(0, 1);
@@ -3366,17 +3364,17 @@ struct tensor
         T a32 = idx(2, 1);
         T a33 = idx(2, 2);
 
-        T x0 = (a22 * a33 - a23 * a32) * d;
-        T y0 = (a13 * a32 - a12 * a33) * d;
-        T z0 = (a12 * a23 - a13 * a22) * d;
+        T x0 = (a22 * a33 - a23 * a32);
+        T y0 = (a13 * a32 - a12 * a33);
+        T z0 = (a12 * a23 - a13 * a22);
 
-        T x1 = (a23 * a31 - a21 * a33) * d;
-        T y1 = (a11 * a33 - a13 * a31) * d;
-        T z1 = (a13 * a21 - a11 * a23) * d;
+        T x1 = (a23 * a31 - a21 * a33);
+        T y1 = (a11 * a33 - a13 * a31);
+        T z1 = (a13 * a21 - a11 * a23);
 
-        T x2 = (a21 * a32 - a22 * a31) * d;
-        T y2 = (a12 * a31 - a11 * a32) * d;
-        T z2 = (a11 * a22 - a12 * a21) * d;
+        T x2 = (a21 * a32 - a22 * a31);
+        T y2 = (a12 * a31 - a11 * a32);
+        T z2 = (a11 * a22 - a12 * a21);
 
         tensor<T, N...> ret;
 
@@ -3392,6 +3390,28 @@ struct tensor
 
         return ret;
     }
+
+    tensor<T, N...> invert() const
+    {
+        static_assert(sizeof...(N) == 2);
+        static_assert(((N == 3) && ...));
+
+        T d = 1/det();
+
+        tensor<T, N...> ret = unit_invert();
+
+        ret.idx(0, 0) = ret.idx(0, 0) * d;
+        ret.idx(0, 1) = ret.idx(0, 1) * d;
+        ret.idx(0, 2) = ret.idx(0, 2) * d;
+        ret.idx(1, 0) = ret.idx(1, 0) * d;
+        ret.idx(1, 1) = ret.idx(1, 1) * d;
+        ret.idx(1, 2) = ret.idx(1, 2) * d;
+        ret.idx(2, 0) = ret.idx(2, 0) * d;
+        ret.idx(2, 1) = ret.idx(2, 1) * d;
+        ret.idx(2, 2) = ret.idx(2, 2) * d;
+
+        return ret;
+    }
 };
 
 template<typename T, int... N>
@@ -3403,10 +3423,22 @@ struct inverse_metric : tensor<T, N...>
 template<typename T, int... N>
 struct metric : tensor<T, N...>
 {
-    inverse_metric<T, N...> invert() const
+    virtual inverse_metric<T, N...> invert() const
     {
         inverse_metric<T, N...> r;
         r.data = tensor<T, N...>::invert().data;
+
+        return r;
+    }
+};
+
+template<typename T, int... N>
+struct unit_metric : metric<T, N...>
+{
+    virtual inverse_metric<T, N...> invert() const override
+    {
+        inverse_metric<T, N...> r;
+        r.data = tensor<T, N...>::unit_invert().data;
 
         return r;
     }
