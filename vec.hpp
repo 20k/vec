@@ -3394,6 +3394,24 @@ struct tensor
     }
 };
 
+template<typename T, int... N>
+struct inverse_metric : tensor<T, N...>
+{
+
+};
+
+template<typename T, int... N>
+struct metric : tensor<T, N...>
+{
+    inverse_metric<T, N...> invert() const
+    {
+        inverse_metric<T, N...> r;
+        r.data = tensor<T, N...>::invert().data;
+
+        return r;
+    }
+};
+
 /*template<typename T>
 vec<3, T> operator*(const mat<3, T> m, const vec<3, T>& other)
 {
