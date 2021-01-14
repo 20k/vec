@@ -3352,7 +3352,7 @@ struct tensor
         static_assert(sizeof...(N) == 2);
         static_assert(((N == 3) && ...));
 
-        T d = det();
+        T d = 1/det();
 
         T a11 = idx(0, 0);
         T a12 = idx(0, 1);
