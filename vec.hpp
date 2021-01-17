@@ -9,6 +9,7 @@
 #include <utility>
 #include <array>
 #include <string>
+#include <assert.h>
 
 #define M_PI		3.14159265358979323846
 #define M_PIf ((float)M_PI)
@@ -3329,8 +3330,8 @@ struct tensor
 
     T det() const
     {
-        static_assert(sizeof...(N) == 2, "N must be 3");
-        static_assert(((N == 3) && ...));
+        assert(sizeof...(N) == 2);
+        assert(((N == 3) && ...));
 
         T a11 = idx(0, 0);
         T a12 = idx(0, 1);
@@ -3349,8 +3350,8 @@ struct tensor
 
     tensor<T, N...> unit_invert() const
     {
-        static_assert(sizeof...(N) == 2);
-        static_assert(((N == 3) && ...));
+        assert(sizeof...(N) == 2);
+        assert(((N == 3) && ...));
 
         T a11 = idx(0, 0);
         T a12 = idx(0, 1);
@@ -3393,8 +3394,8 @@ struct tensor
 
     tensor<T, N...> invert() const
     {
-        static_assert(sizeof...(N) == 2);
-        static_assert(((N == 3) && ...));
+        assert(sizeof...(N) == 2);
+        assert(((N == 3) && ...));
 
         T d = 1/det();
 
