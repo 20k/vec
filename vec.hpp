@@ -1244,6 +1244,16 @@ uint32_t rgba_to_uint(const vec<3, float>& rgb)
     return rgba_to_uint(vec4f{rgb.v[0], rgb.v[1], rgb.v[2], 1.f});
 }
 
+template<typename T>
+inline
+T srgb_to_lin(const T& in)
+{
+    if(in < 0.04045)
+        return in / 12.92;
+    else
+        return pow((in + 0.055) / 1.055, 2.4);
+}
+
 ///https://chilliant.blogspot.com/2012/08/srgb-approximations-for-hlsl.html
 template<int N, typename T>
 inline
@@ -1253,10 +1263,7 @@ vec<N, T> srgb_to_lin(const vec<N, T>& in)
 
     for(int i=0; i < N; i++)
     {
-        if(in.v[i] < 0.04045)
-            ret.v[i] = in.v[i] / 12.92;
-        else
-            ret.v[i] = pow((in.v[i] + 0.055) / 1.055, 2.4);
+        ret[i] = srgb_to_lin(in[i]);
     }
 
     return ret;
@@ -1273,6 +1280,16 @@ constexpr vec<N, T> srgb_to_lin_approx(const vec<N, T>& in)
     0.305306011f * in * in * in;
 }
 
+template<typename T>
+inline
+T lin_to_srgb(const T& in)
+{
+    if(in <= 0.0031308)
+        return in * 12.92;
+    else
+        return 1.055 * pow(in, 1.0 / 2.4) - 0.055;
+}
+
 template<int N, typename T>
 inline
 vec<N, T> lin_to_srgb(const vec<N, T>& in)
@@ -1281,10 +1298,7 @@ vec<N, T> lin_to_srgb(const vec<N, T>& in)
 
     for(int i=0; i < N; i++)
     {
-        if(in.v[i] <= 0.0031308)
-            ret.v[i] = in.v[i] * 12.92;
-        else
-            ret.v[i] = 1.055 * pow(in.v[i], 1.0 / 2.4) - 0.055;
+        ret[i] = lin_to_srgb(in[i]);
     }
 
     return ret;
