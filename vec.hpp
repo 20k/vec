@@ -3351,7 +3351,32 @@ struct quaternion_base
 
         return os;
     }
+
+    T get_scalar() const
+    {
+        return q.w();
+    }
+
+    vec<3, T> get_vector() const
+    {
+        return {q.x(), q.y(), q.z()};
+    }
 };
+
+template<typename T>
+inline
+T angle_between_quaternions(const quaternion_base<T>& q1, const quaternion_base<T>& q2)
+{
+    auto Z = q1.conjugate() * q2;
+
+    return 2 * atan2(Z.get_vector().length(), Z.get_scalar());
+}
+
+template<typename T>
+quaternion_base<T> slerp(const quaternion_base<T>& q1, const quaternion_base<T>& q2, const T& a)
+{
+    return quaternion_base<T>::slerp(q1, q2, a);
+}
 
 using quaternion = quaternion_base<float>;
 
