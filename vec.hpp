@@ -3373,6 +3373,7 @@ T angle_between_quaternions(const quaternion_base<T>& q1, const quaternion_base<
 }
 
 template<typename T>
+inline
 quaternion_base<T> slerp(const quaternion_base<T>& q1, const quaternion_base<T>& q2, const T& a)
 {
     return quaternion_base<T>::slerp(q1, q2, a);
