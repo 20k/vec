@@ -3305,12 +3305,15 @@ struct quaternion_base
         return {x, y, z, angle};
     }
 
-    void load_from_axis_angle(vec<4, T> aa)
+    void load_from_axis_angle(const vec<4, T>& aa)
     {
-        q.v[0] = aa.v[0] * sin(aa.v[3]/2);
-        q.v[1] = aa.v[1] * sin(aa.v[3]/2);
-        q.v[2] = aa.v[2] * sin(aa.v[3]/2);
-        q.v[3] = cos(aa.v[3]/2);
+        vec3f axis = aa.xyz().norm();
+        float angle = aa.w();
+
+        q.v[0] = axis.x() * sin(angle/2);
+        q.v[1] = axis.y() * sin(angle/2);
+        q.v[2] = axis.z() * sin(angle/2);
+        q.v[3] = cos(angle/2);
 
         q = q.norm();
     }
