@@ -3119,21 +3119,7 @@ struct quaternion_base
     ///this * ret == q
     quaternion_base<T> get_difference(quaternion_base<T> q) const
     {
-        mat<3, T> t = get_rotation_matrix();
-        mat<3, T> o = q.get_rotation_matrix();
-
-        ///A*q1 = q2
-        ///A = q2 * q1'
-
-        ///q1 * A = q2
-        ///A = q1'q2
-
-        mat<3, T> diff = t.transp() * o;
-
-        quaternion_base<T> ret;
-        ret.load_from_matrix(diff);
-
-        return ret;
+        return inverse() * q;
     }
 
     void load_from_euler(vec<3, T> _rot)
@@ -3184,9 +3170,7 @@ struct quaternion_base
 
             ///can... can this even not be normalised?
             ///i'm starting to trust this code less
-            nq.q = nq.q.norm();
-
-            return nq;
+            return nq.norm();
         }
 
         d = clamp(d, -1.f, 1.f);
@@ -3207,10 +3191,14 @@ struct quaternion_base
 
         if(is_negative)
         {
-            return {A * q1.q - B * q2.q};
+            quaternion_base<T> ret{A * q1.q - B * q2.q};
+
+            return ret.norm();
         }
 
-        return {A * q1.q + B * q2.q};
+        quaternion_base<T> ret{A * q1.q + B * q2.q};
+
+        return ret.norm();
     }
 
     ///http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToMatrix/
