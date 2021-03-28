@@ -3283,7 +3283,7 @@ struct quaternion_base
         T y = qy / sqrt(1-qw*qw);
         T z = qz / sqrt(1-qw*qw);
 
-        if(qw >= 0.999f)
+        if(qw >= 0.99999f)
         {
             x = 1;
             y = 0;
@@ -3291,9 +3291,10 @@ struct quaternion_base
             angle = 0;
         }
 
-        vec<4, T> ret{x, y, z, angle};
+        vec3f dir = {x, y, z};
+        dir = dir.norm();
 
-        return ret.norm();
+        return {dir.x(), dir.y(), dir.z(), angle};
     }
 
     void load_from_axis_angle(const vec<4, T>& aa)
