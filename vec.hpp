@@ -3288,9 +3288,12 @@ struct quaternion_base
             x = 1;
             y = 0;
             z = 0;
+            angle = 0;
         }
 
-        return {x, y, z, angle};
+        vec<4, T> ret{x, y, z, angle};
+
+        return ret.norm();
     }
 
     void load_from_axis_angle(const vec<4, T>& aa)
