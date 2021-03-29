@@ -3144,7 +3144,7 @@ struct quaternion_base
         ret.q.v[2] = q.v[3] * other.q.v[2] + q.v[2] * other.q.v[3] + q.v[0] * other.q.v[1] - q.v[1] * other.q.v[0];
         ret.q.v[3] = q.v[3] * other.q.v[3] - q.v[0] * other.q.v[0] - q.v[1] * other.q.v[1] - q.v[2] * other.q.v[2];
 
-        return ret;
+        return ret.norm();
     }
 
     ///http://number-none.com/product/Understanding%20Slerp,%20Then%20Not%20Using%20It/
