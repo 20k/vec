@@ -3514,6 +3514,98 @@ auto& index_md_array(T& arr, Next v, Rest... r)
     return index_md_array(arr[v], r...);
 }
 
+/*
+void metric_inverse(const float m[16], float invOut[16])
+{
+    float inv[16], det;
+    int i;
+
+    inv[0] = m[5] * m[10] * m[15] -
+             m[5] * m[11] * m[11] -
+             m[6] * m[6]  * m[15] +
+             m[6] * m[7]  * m[11] +
+             m[7] * m[6]  * m[11] -
+             m[7] * m[7]  * m[10];
+
+    inv[1] = -m[1] * m[10] * m[15] +
+              m[1] * m[11] * m[11] +
+              m[6] * m[2] * m[15] -
+              m[6] * m[3] * m[11] -
+              m[7] * m[2] * m[11] +
+              m[7] * m[3] * m[10];
+
+    inv[5] = m[0] * m[10] * m[15] -
+             m[0] * m[11] * m[11] -
+             m[2] * m[2] * m[15] +
+             m[2] * m[3] * m[11] +
+             m[3] * m[2] * m[11] -
+             m[3] * m[3] * m[10];
+
+
+    inv[2] = m[1] * m[6] * m[15] -
+             m[1] * m[7] * m[11] -
+             m[5] * m[2] * m[15] +
+             m[5] * m[3] * m[11] +
+             m[7] * m[2] * m[7] -
+             m[7] * m[3] * m[6];
+
+    inv[6] = -m[0] * m[6] * m[15] +
+              m[0] * m[7] * m[11] +
+              m[1] * m[2] * m[15] -
+              m[1] * m[3] * m[11] -
+              m[3] * m[2] * m[7] +
+              m[3] * m[3] * m[6];
+
+    inv[10] = m[0] * m[5] * m[15] -
+              m[0] * m[7] * m[7] -
+              m[1] * m[1] * m[15] +
+              m[1] * m[3] * m[7] +
+              m[3] * m[1] * m[7] -
+              m[3] * m[3] * m[5];
+
+    inv[3] = -m[1] * m[6] * m[11] +
+              m[1] * m[7] * m[10] +
+              m[5] * m[2] * m[11] -
+              m[5] * m[3] * m[10] -
+              m[6] * m[2] * m[7] +
+              m[6] * m[3] * m[6];
+
+    inv[7] = m[0] * m[6] * m[11] -
+             m[0] * m[7] * m[10] -
+             m[1] * m[2] * m[11] +
+             m[1] * m[3] * m[10] +
+             m[2] * m[2] * m[7] -
+             m[2] * m[3] * m[6];
+
+    inv[11] = -m[0] * m[5] * m[11] +
+               m[0] * m[7] * m[6] +
+               m[1] * m[1] * m[11] -
+               m[1] * m[3] * m[6] -
+               m[2] * m[1] * m[7] +
+               m[2] * m[3] * m[5];
+
+    inv[15] = m[0] * m[5] * m[10] -
+              m[0] * m[6] * m[6] -
+              m[1] * m[1] * m[10] +
+              m[1] * m[2] * m[6] +
+              m[2] * m[1] * m[6] -
+              m[2] * m[2] * m[5];
+
+    inv[4] = inv[1];
+    inv[8] = inv[2];
+    inv[12] = inv[3];
+    inv[9] = inv[6];
+    inv[13] = inv[7];
+    inv[14] = inv[11];
+
+    det = m[0] * inv[0] + m[1] * inv[4] + m[2] * inv[8] + m[3] * inv[12];
+
+    det = 1.0 / det;
+
+    for (i = 0; i < 16; i++)
+        invOut[i] = inv[i] * det;
+}*/
+
 template<typename T, int... N>
 struct tensor
 {
@@ -3602,23 +3694,151 @@ struct tensor
     tensor<T, N...> invert() const
     {
         assert(sizeof...(N) == 2);
-        assert(((N == 3) && ...));
+        assert((((N == 3) && ...)) || ((N == 4) && ...));
 
-        T d = 1/det();
+        if constexpr(((N == 3) && ...))
+        {
+            T d = 1/det();
 
-        tensor<T, N...> ret = unit_invert();
+            tensor<T, N...> ret = unit_invert();
 
-        ret.idx(0, 0) = ret.idx(0, 0) * d;
-        ret.idx(0, 1) = ret.idx(0, 1) * d;
-        ret.idx(0, 2) = ret.idx(0, 2) * d;
-        ret.idx(1, 0) = ret.idx(1, 0) * d;
-        ret.idx(1, 1) = ret.idx(1, 1) * d;
-        ret.idx(1, 2) = ret.idx(1, 2) * d;
-        ret.idx(2, 0) = ret.idx(2, 0) * d;
-        ret.idx(2, 1) = ret.idx(2, 1) * d;
-        ret.idx(2, 2) = ret.idx(2, 2) * d;
+            ret.idx(0, 0) = ret.idx(0, 0) * d;
+            ret.idx(0, 1) = ret.idx(0, 1) * d;
+            ret.idx(0, 2) = ret.idx(0, 2) * d;
+            ret.idx(1, 0) = ret.idx(1, 0) * d;
+            ret.idx(1, 1) = ret.idx(1, 1) * d;
+            ret.idx(1, 2) = ret.idx(1, 2) * d;
+            ret.idx(2, 0) = ret.idx(2, 0) * d;
+            ret.idx(2, 1) = ret.idx(2, 1) * d;
+            ret.idx(2, 2) = ret.idx(2, 2) * d;
 
-        return ret;
+            return ret;
+        }
+
+        if constexpr(((N == 4) && ...))
+        {
+            ///[0, 1, 2, 3]
+            ///[4, 5, 6, 7]
+            ///[8, 9, 10,11]
+            ///[12,13,14,15]
+
+            std::array<T, 16> m;
+            m[0] = idx(0, 0);
+            m[1] = idx(0, 1);
+            m[2] = idx(0, 2);
+            m[3] = idx(0, 3);
+            m[4] = idx(1, 0);
+            m[5] = idx(1, 1);
+            m[6] = idx(1, 2);
+            m[7] = idx(1, 3);
+            m[8] = idx(2, 0);
+            m[9] = idx(2, 1);
+            m[10] = idx(2, 2);
+            m[11] = idx(2, 3);
+            m[12] = idx(3, 0);
+            m[13] = idx(3, 1);
+            m[14] = idx(3, 2);
+            m[15] = idx(3, 3);
+
+            std::array<T, 16> inv;
+
+            T det = T();
+            tensor<T, N...> ret;
+
+            inv[0] = m[5] * m[10] * m[15] -
+                     m[5] * m[11] * m[11] -
+                     m[6] * m[6]  * m[15] +
+                     m[6] * m[7]  * m[11] +
+                     m[7] * m[6]  * m[11] -
+                     m[7] * m[7]  * m[10];
+
+            inv[1] = -m[1] * m[10] * m[15] +
+                      m[1] * m[11] * m[11] +
+                      m[6] * m[2] * m[15] -
+                      m[6] * m[3] * m[11] -
+                      m[7] * m[2] * m[11] +
+                      m[7] * m[3] * m[10];
+
+            inv[5] = m[0] * m[10] * m[15] -
+                     m[0] * m[11] * m[11] -
+                     m[2] * m[2] * m[15] +
+                     m[2] * m[3] * m[11] +
+                     m[3] * m[2] * m[11] -
+                     m[3] * m[3] * m[10];
+
+
+            inv[2] = m[1] * m[6] * m[15] -
+                     m[1] * m[7] * m[11] -
+                     m[5] * m[2] * m[15] +
+                     m[5] * m[3] * m[11] +
+                     m[7] * m[2] * m[7] -
+                     m[7] * m[3] * m[6];
+
+            inv[6] = -m[0] * m[6] * m[15] +
+                      m[0] * m[7] * m[11] +
+                      m[1] * m[2] * m[15] -
+                      m[1] * m[3] * m[11] -
+                      m[3] * m[2] * m[7] +
+                      m[3] * m[3] * m[6];
+
+            inv[10] = m[0] * m[5] * m[15] -
+                      m[0] * m[7] * m[7] -
+                      m[1] * m[1] * m[15] +
+                      m[1] * m[3] * m[7] +
+                      m[3] * m[1] * m[7] -
+                      m[3] * m[3] * m[5];
+
+            inv[3] = -m[1] * m[6] * m[11] +
+                      m[1] * m[7] * m[10] +
+                      m[5] * m[2] * m[11] -
+                      m[5] * m[3] * m[10] -
+                      m[6] * m[2] * m[7] +
+                      m[6] * m[3] * m[6];
+
+            inv[7] = m[0] * m[6] * m[11] -
+                     m[0] * m[7] * m[10] -
+                     m[1] * m[2] * m[11] +
+                     m[1] * m[3] * m[10] +
+                     m[2] * m[2] * m[7] -
+                     m[2] * m[3] * m[6];
+
+            inv[11] = -m[0] * m[5] * m[11] +
+                       m[0] * m[7] * m[6] +
+                       m[1] * m[1] * m[11] -
+                       m[1] * m[3] * m[6] -
+                       m[2] * m[1] * m[7] +
+                       m[2] * m[3] * m[5];
+
+            inv[15] = m[0] * m[5] * m[10] -
+                      m[0] * m[6] * m[6] -
+                      m[1] * m[1] * m[10] +
+                      m[1] * m[2] * m[6] +
+                      m[2] * m[1] * m[6] -
+                      m[2] * m[2] * m[5];
+
+            inv[4] = inv[1];
+            inv[8] = inv[2];
+            inv[12] = inv[3];
+            inv[9] = inv[6];
+            inv[13] = inv[7];
+            inv[14] = inv[11];
+
+            det = m[0] * inv[0] + m[1] * inv[4] + m[2] * inv[8] + m[3] * inv[12];
+
+            det = 1.0f / det;
+
+            for(int x=0; x < 3; x++)
+            {
+                for(int y=0; y < 3; y++)
+                {
+                    ret.idx(y, x) = inv[y * 3 + x];
+                }
+            }
+
+            return ret;
+        }
+
+        assert(false);
     }
 };
 
