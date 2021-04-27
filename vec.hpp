@@ -174,7 +174,7 @@ struct vec
         }
     }
 
-    vec<N, T>& operator=(T val)
+    vec<N, T>& operator=(const T& val)
     {
         for(int i=0; i<N; i++)
         {
@@ -196,7 +196,7 @@ struct vec
         return r;
     }
 
-    constexpr vec<N, T> operator+(T other) const
+    constexpr vec<N, T> operator+(const T& other) const
     {
         vec<N, T> r;
 
@@ -221,7 +221,7 @@ struct vec
     }
 
 
-    constexpr vec<N, T> operator-(T other) const
+    constexpr vec<N, T> operator-(const T& other) const
     {
         vec<N, T> r;
 
@@ -248,7 +248,7 @@ struct vec
 
     ///beginnings of making this actually work properly
     template<typename U>
-    constexpr vec<N, T> operator*(U other) const
+    constexpr vec<N, T> operator*(const U& other) const
     {
         vec<N, T> r;
 
@@ -272,7 +272,7 @@ struct vec
         return r;
     }
 
-    constexpr vec<N, T> operator/(T other) const
+    constexpr vec<N, T> operator/(const T& other) const
     {
         vec<N, T> r;
 
@@ -312,28 +312,28 @@ struct vec
         return *this;
     }
 
-    constexpr vec<N, T>& operator+=(T other)
+    constexpr vec<N, T>& operator+=(const T& other)
     {
         *this = *this + other;
 
         return *this;
     }
 
-    constexpr vec<N, T>& operator-=(T other)
+    constexpr vec<N, T>& operator-=(const T& other)
     {
         *this = *this - other;
 
         return *this;
     }
 
-    constexpr vec<N, T>& operator*=(T other)
+    constexpr vec<N, T>& operator*=(const T& other)
     {
         *this = *this * other;
 
         return *this;
     }
 
-    constexpr vec<N, T>& operator/=(T other)
+    constexpr vec<N, T>& operator/=(const T& other)
     {
         *this = *this / other;
 
@@ -1620,13 +1620,13 @@ constexpr inline vec<N, T> operator-(const vec<N, T>& v1)
 }
 
 template<int N, typename T, typename U>
-constexpr inline vec<N, U> operator*(T v, const vec<N, U>& v1)
+constexpr inline vec<N, U> operator*(const T& v, const vec<N, U>& v1)
 {
     return v1 * v;
 }
 
 template<int N, typename T>
-constexpr inline vec<N, T> operator+(T v, const vec<N, T>& v1)
+constexpr inline vec<N, T> operator+(const T& v, const vec<N, T>& v1)
 {
     return v1 + v;
 }
@@ -1639,7 +1639,7 @@ constexpr inline vec<N, T> operator+(T v, const vec<N, T>& v1)
 ///should convert these functions to be N/T
 
 template<int N, typename T>
-constexpr inline vec<N, T> operator/(T v, const vec<N, T>& v1)
+constexpr inline vec<N, T> operator/(const T& v, const vec<N, T>& v1)
 {
     vec<N, T> top;
 
@@ -2906,7 +2906,7 @@ struct mat
         return ret;
     }
 
-    mat<3, T> operator*(T other) const
+    mat<3, T> operator*(const T& other) const
     {
         mat<3, T> ret;
 
@@ -3827,11 +3827,11 @@ struct tensor
 
             det = 1.0f / det;
 
-            for(int x=0; x < 3; x++)
+            for(int x=0; x < 4; x++)
             {
-                for(int y=0; y < 3; y++)
+                for(int y=0; y < 4; y++)
                 {
-                    ret.idx(y, x) = inv[y * 3 + x];
+                    ret.idx(y, x) = inv[y * 4 + x];
                 }
             }
 
