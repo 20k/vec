@@ -366,6 +366,101 @@ struct tensor
     }
 };
 
+template<int N>
+inline
+int get_first_of()
+{
+    return N;
+}
+
+template<int... M>
+inline
+int get_first_of()
+{
+    return get_first_of<M...>();
+}
+
+template<int N, int M>
+inline
+int get_second_of()
+{
+    return M;
+}
+
+template<int... M>
+inline
+int get_second_of()
+{
+    return get_second_of<M...>();
+}
+
+template<int N, int M, int O>
+inline
+int get_third_of()
+{
+    return O;
+}
+
+template<int... M>
+inline
+int get_third_of()
+{
+    return get_third_of<M...>();
+}
+
+template<typename U, typename T, int... N>
+inline
+tensor<T, N...> tensor_for_each_unary(const tensor<T, N...>& v, U&& u)
+{
+    tensor<T, N...> ret;
+
+    if constexpr(sizeof...(N) == 1)
+    {
+        int len = get_first_of<N...>();
+
+        for(int i=0; i < len; i++)
+        {
+            ret.idx(i) = u(v.idx(i));
+        }
+    }
+    else if constexpr(sizeof...(N) == 2)
+    {
+        int l1 = get_first_of<N...>();
+        int l2 = get_second_of<N...>();
+
+        for(int i=0; i < l1; i++)
+        {
+            for(int j=0; j < l2; j++)
+            {
+                ret.idx(i, j) = u(v.idx(i, j));
+            }
+        }
+    }
+    else if constexpr(sizeof...(N) == 3)
+    {
+        int l1 = get_first_of<N...>();
+        int l2 = get_second_of<N...>();
+        int l3 = get_third_of<N...>();
+
+        for(int i=0; i < l1; i++)
+        {
+            for(int j=0; j < l2; j++)
+            {
+                for(int k=0; k < l3; k++)
+                {
+                    ret.idx(i, j, k) = u(v.idx(i, j, k));
+                }
+            }
+        }
+    }
+    else
+    {
+        assert(false);
+    }
+
+    return ret;
+}
+
 template<typename T, int... N>
 struct inverse_metric : tensor<T, N...>
 {
