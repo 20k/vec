@@ -437,6 +437,34 @@ struct tensor
     }
 };
 
+template<typename T, int N>
+inline
+T sum_multiply(const tensor<T, N>& t1, const tensor<T, N>& t2)
+{
+    T ret = 0;
+
+    for(int i=0; i < N; i++)
+    {
+        ret += t1.idx(i) * t2.idx(i);
+    }
+
+    return ret;
+}
+
+template<typename T, int N>
+inline
+T sum(const tensor<T, N>& t1)
+{
+    T ret = 0;
+
+    for(int i=0; i < N; i++)
+    {
+        ret = ret + t1.idx(i);
+    }
+
+    return ret;
+}
+
 template<int N, int... M>
 inline
 int get_first_of()
