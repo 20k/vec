@@ -131,6 +131,17 @@ void metric_inverse(const float m[16], float invOut[16])
 }*/
 
 template<typename T, int... N>
+struct tensor;
+
+template<typename U, typename T, int... N>
+inline
+tensor<T, N...> tensor_for_each_binary(const tensor<T, N...>& v1, const tensor<T, N...> v2, U&& u);
+
+template<typename U, typename T, int... N>
+inline
+tensor<T, N...> tensor_for_each_unary(const tensor<T, N...>& v, U&& u);
+
+template<typename T, int... N>
 struct tensor
 {
     md_array<T, N...> data;
@@ -364,48 +375,87 @@ struct tensor
 
         assert(false);
     }
+
+    friend tensor<T, N...> operator+(const tensor<T, N...>& t1, const tensor<T, N...>& t2)
+    {
+        return tensor_for_each_binary(t1, t2, [](const T& v1, const T& v2){return v1 + v2;});
+    }
+
+    friend tensor<T, N...> operator-(const tensor<T, N...>& t1, const tensor<T, N...>& t2)
+    {
+        return tensor_for_each_binary(t1, t2, [](const T& v1, const T& v2){return v1 - v2;});
+    }
+
+    friend tensor<T, N...> operator*(const tensor<T, N...>& t1, const tensor<T, N...>& t2)
+    {
+        return tensor_for_each_binary(t1, t2, [](const T& v1, const T& v2){return v1 * v2;});
+    }
+
+    friend tensor<T, N...> operator/(const tensor<T, N...>& t1, const tensor<T, N...>& t2)
+    {
+        return tensor_for_each_binary(t1, t2, [](const T& v1, const T& v2){return v1 / v2;});
+    }
+
+    friend tensor<T, N...> operator+(const tensor<T, N...>& t1, const T& v2)
+    {
+        return tensor_for_each_unary(t1, [&](const T& v1){return v1 + v2;});
+    }
+
+    friend tensor<T, N...> operator-(const tensor<T, N...>& t1, const T& v2)
+    {
+        return tensor_for_each_unary(t1, [&](const T& v1){return v1 - v2;});
+    }
+
+    friend tensor<T, N...> operator*(const tensor<T, N...>& t1, const T& v2)
+    {
+        return tensor_for_each_unary(t1, [&](const T& v1){return v1 * v2;});
+    }
+
+    friend tensor<T, N...> operator/(const tensor<T, N...>& t1, const T& v2)
+    {
+        return tensor_for_each_unary(t1, [&](const T& v1){return v1 / v2;});
+    }
+
+    friend tensor<T, N...> operator+(const T& v1, const tensor<T, N...>& t2)
+    {
+        return tensor_for_each_unary(t2, [&](const T& v2){return v1 + v2;});
+    }
+
+    friend tensor<T, N...> operator-(const T& v1, const tensor<T, N...>& t2)
+    {
+        return tensor_for_each_unary(t2, [&](const T& v2){return v1 - v2;});
+    }
+
+    friend tensor<T, N...> operator*(const T& v1, const tensor<T, N...>& t2)
+    {
+        return tensor_for_each_unary(t2, [&](const T& v2){return v1 * v2;});
+    }
+
+    friend tensor<T, N...> operator/(const T& v1, const tensor<T, N...>& t2)
+    {
+        return tensor_for_each_unary(t2, [&](const T& v2){return v1 / v2;});
+    }
 };
 
-template<int N>
+template<int N, int... M>
 inline
 int get_first_of()
 {
     return N;
 }
 
-template<int... M>
+template<int N, int... M>
 inline
-int get_first_of()
+int get_second_of()
 {
     return get_first_of<M...>();
 }
 
-template<int N, int M>
+template<int N, int... M>
 inline
-int get_second_of()
-{
-    return M;
-}
-
-template<int... M>
-inline
-int get_second_of()
+int get_third_of()
 {
     return get_second_of<M...>();
-}
-
-template<int N, int M, int O>
-inline
-int get_third_of()
-{
-    return O;
-}
-
-template<int... M>
-inline
-int get_third_of()
-{
-    return get_third_of<M...>();
 }
 
 template<typename U, typename T, int... N>
@@ -449,6 +499,59 @@ tensor<T, N...> tensor_for_each_unary(const tensor<T, N...>& v, U&& u)
                 for(int k=0; k < l3; k++)
                 {
                     ret.idx(i, j, k) = u(v.idx(i, j, k));
+                }
+            }
+        }
+    }
+    else
+    {
+        assert(false);
+    }
+
+    return ret;
+}
+
+template<typename U, typename T, int... N>
+inline
+tensor<T, N...> tensor_for_each_binary(const tensor<T, N...>& v1, const tensor<T, N...> v2, U&& u)
+{
+    tensor<T, N...> ret;
+
+    if constexpr(sizeof...(N) == 1)
+    {
+        int len = get_first_of<N...>();
+
+        for(int i=0; i < len; i++)
+        {
+            ret.idx(i) = u(v1.idx(i), v2.idx(i));
+        }
+    }
+    else if constexpr(sizeof...(N) == 2)
+    {
+        int l1 = get_first_of<N...>();
+        int l2 = get_second_of<N...>();
+
+        for(int i=0; i < l1; i++)
+        {
+            for(int j=0; j < l2; j++)
+            {
+                ret.idx(i, j) = u(v1.idx(i, j), v2.idx(i, j));
+            }
+        }
+    }
+    else if constexpr(sizeof...(N) == 3)
+    {
+        int l1 = get_first_of<N...>();
+        int l2 = get_second_of<N...>();
+        int l3 = get_third_of<N...>();
+
+        for(int i=0; i < l1; i++)
+        {
+            for(int j=0; j < l2; j++)
+            {
+                for(int k=0; k < l3; k++)
+                {
+                    ret.idx(i, j, k) = u(v1.idx(i, j, k), v2.idx(i, j, k));
                 }
             }
         }
