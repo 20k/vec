@@ -592,6 +592,26 @@ tensor<T, N...> tensor_for_each_binary(const tensor<T, N...>& v1, const tensor<T
     return ret;
 }
 
+template<int... Indices>
+struct tensor_indices
+{
+    std::array<int, sizeof...(Indices)> indices = {Indices...};
+};
+
+template<typename T, int... N, int... M, int... N1, int... M1>
+inline
+auto sum_multiply_fat(const tensor<T, N...>& t1, const tensor<T, M...>& t2, const tensor_indices<N1...>& b1, const tensor_indices<M1...>& b2)
+{
+    constexpr int total_dimensionality = sizeof...(N) + sizeof...(M);
+    constexpr int argument_summation = sizeof...(N1) + sizeof...(M1);
+
+    constexpr int return_dimensions = total_dimensionality - argument_summation;
+
+    ///need to turn return_dimensions into a parameter pack of return_dimensions long, where each element has a value of the components of N...
+
+    //tensor<T, return_dimension>
+}
+
 template<typename T, int... N>
 struct inverse_metric : tensor<T, N...>
 {
