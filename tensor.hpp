@@ -130,21 +130,32 @@ void metric_inverse(const float m[16], float invOut[16])
         invOut[i] = inv[i] * det;
 }*/
 
-template<typename T, int... N>
-struct tensor;
+template<template<typename T, int... N> typename Concrete, typename T, int... N>
+struct tensor_base;
 
-template<typename U, typename T, int... N>
+template<template<typename T, int... N> typename Concrete, typename U, typename T, int... N>
 inline
-tensor<T, N...> tensor_for_each_binary(const tensor<T, N...>& v1, const tensor<T, N...> v2, U&& u);
+Concrete<T, N...> tensor_for_each_binary(const Concrete<T, N...>& v1, const Concrete<T, N...>& v2, U&& u);
 
-template<typename U, typename T, int... N>
+template<template<typename T, int... N> typename Concrete, typename U, typename T, int... N>
 inline
-tensor<T, N...> tensor_for_each_unary(const tensor<T, N...>& v, U&& u);
+Concrete<T, N...> tensor_for_each_unary(const Concrete<T, N...>& v, U&& u);
 
-template<typename T, int... N>
-struct tensor
+template<template<typename T, int... N> typename Concrete, typename T, int... N>
+struct tensor_base
 {
+    template<typename U, int... M>
+    using concrete_t = Concrete<U, M...>;
+
+    template<typename U>
+    using value_t = T;
+
     md_array<T, N...> data;
+
+    Concrete<T, N...> to_concrete()
+    {
+        return *this;
+    }
 
     template<typename... V>
     T& idx(V... vals)
@@ -182,7 +193,7 @@ struct tensor
         return a11*a22*a33 + a21*a32*a13 + a31*a12*a23 - a11*a32*a23 - a31*a22*a13 - a21*a12*a33;
     }
 
-    tensor<T, N...> unit_invert() const
+    Concrete<T, N...> unit_invert() const
     {
         assert(sizeof...(N) == 2);
         assert(((N == 3) && ...));
@@ -211,7 +222,7 @@ struct tensor
         T y2 = (a12 * a31 - a11 * a32);
         T z2 = (a11 * a22 - a12 * a21);
 
-        tensor<T, N...> ret;
+        Concrete<T, N...> ret;
 
         ret.idx(0, 0) = x0;
         ret.idx(0, 1) = y0;
@@ -226,7 +237,7 @@ struct tensor
         return ret;
     }
 
-    tensor<T, N...> invert() const
+    Concrete<T, N...> invert() const
     {
         assert(sizeof...(N) == 2);
         assert((((N == 3) && ...)) || ((N == 4) && ...));
@@ -235,7 +246,7 @@ struct tensor
         {
             T d = 1/det();
 
-            tensor<T, N...> ret = unit_invert();
+            Concrete<T, N...> ret = unit_invert();
 
             ret.idx(0, 0) = ret.idx(0, 0) * d;
             ret.idx(0, 1) = ret.idx(0, 1) * d;
@@ -278,7 +289,7 @@ struct tensor
             std::array<T, 16> inv;
 
             T det = T();
-            tensor<T, N...> ret;
+            Concrete<T, N...> ret;
 
             inv[0] = m[5] * m[10] * m[15] -
                      m[5] * m[11] * m[11] -
@@ -376,65 +387,71 @@ struct tensor
         assert(false);
     }
 
-    friend tensor<T, N...> operator+(const tensor<T, N...>& t1, const tensor<T, N...>& t2)
+    friend Concrete<T, N...> operator+(const Concrete<T, N...>& t1, const Concrete<T, N...>& t2)
     {
         return tensor_for_each_binary(t1, t2, [](const T& v1, const T& v2){return v1 + v2;});
     }
 
-    friend tensor<T, N...> operator-(const tensor<T, N...>& t1, const tensor<T, N...>& t2)
+    friend Concrete<T, N...> operator-(const Concrete<T, N...>& t1, const Concrete<T, N...>& t2)
     {
         return tensor_for_each_binary(t1, t2, [](const T& v1, const T& v2){return v1 - v2;});
     }
 
-    friend tensor<T, N...> operator*(const tensor<T, N...>& t1, const tensor<T, N...>& t2)
+    friend Concrete<T, N...> operator*(const Concrete<T, N...>& t1, const Concrete<T, N...>& t2)
     {
         return tensor_for_each_binary(t1, t2, [](const T& v1, const T& v2){return v1 * v2;});
     }
 
-    friend tensor<T, N...> operator/(const tensor<T, N...>& t1, const tensor<T, N...>& t2)
+    friend Concrete<T, N...> operator/(const Concrete<T, N...>& t1, const Concrete<T, N...>& t2)
     {
         return tensor_for_each_binary(t1, t2, [](const T& v1, const T& v2){return v1 / v2;});
     }
 
-    friend tensor<T, N...> operator+(const tensor<T, N...>& t1, const T& v2)
+    friend Concrete<T, N...> operator+(const Concrete<T, N...>& t1, const T& v2)
     {
         return tensor_for_each_unary(t1, [&](const T& v1){return v1 + v2;});
     }
 
-    friend tensor<T, N...> operator-(const tensor<T, N...>& t1, const T& v2)
+    friend Concrete<T, N...> operator-(const Concrete<T, N...>& t1, const T& v2)
     {
         return tensor_for_each_unary(t1, [&](const T& v1){return v1 - v2;});
     }
 
-    friend tensor<T, N...> operator*(const tensor<T, N...>& t1, const T& v2)
+    friend Concrete<T, N...> operator*(const Concrete<T, N...>& t1, const T& v2)
     {
         return tensor_for_each_unary(t1, [&](const T& v1){return v1 * v2;});
     }
 
-    friend tensor<T, N...> operator/(const tensor<T, N...>& t1, const T& v2)
+    friend Concrete<T, N...> operator/(const Concrete<T, N...>& t1, const T& v2)
     {
         return tensor_for_each_unary(t1, [&](const T& v1){return v1 / v2;});
     }
 
-    friend tensor<T, N...> operator+(const T& v1, const tensor<T, N...>& t2)
+    friend Concrete<T, N...> operator+(const T& v1, const Concrete<T, N...>& t2)
     {
         return tensor_for_each_unary(t2, [&](const T& v2){return v1 + v2;});
     }
 
-    friend tensor<T, N...> operator-(const T& v1, const tensor<T, N...>& t2)
+    friend Concrete<T, N...> operator-(const T& v1, const Concrete<T, N...>& t2)
     {
         return tensor_for_each_unary(t2, [&](const T& v2){return v1 - v2;});
     }
 
-    friend tensor<T, N...> operator*(const T& v1, const tensor<T, N...>& t2)
+    friend Concrete<T, N...> operator*(const T& v1, const Concrete<T, N...>& t2)
     {
         return tensor_for_each_unary(t2, [&](const T& v2){return v1 * v2;});
     }
 
-    friend tensor<T, N...> operator/(const T& v1, const tensor<T, N...>& t2)
+    friend Concrete<T, N...> operator/(const T& v1, const Concrete<T, N...>& t2)
     {
         return tensor_for_each_unary(t2, [&](const T& v2){return v1 / v2;});
     }
+};
+
+template<typename T, int... N>
+struct tensor : tensor_base<tensor, T, N...>
+{
+
 };
 
 template<typename T, int N>
@@ -486,11 +503,11 @@ int get_third_of()
     return get_second_of<M...>();
 }
 
-template<typename U, typename T, int... N>
+template<template<typename T, int... N> typename Concrete, typename U, typename T, int... N>
 inline
-tensor<T, N...> tensor_for_each_unary(const tensor<T, N...>& v, U&& u)
+Concrete<T, N...> tensor_for_each_unary(const Concrete<T, N...>& v, U&& u)
 {
-    tensor<T, N...> ret;
+    Concrete<T, N...> ret;
 
     if constexpr(sizeof...(N) == 1)
     {
@@ -539,11 +556,11 @@ tensor<T, N...> tensor_for_each_unary(const tensor<T, N...>& v, U&& u)
     return ret;
 }
 
-template<typename U, typename T, int... N>
+template<template<typename T, int... N> typename Concrete, typename U, typename T, int... N>
 inline
-tensor<T, N...> tensor_for_each_binary(const tensor<T, N...>& v1, const tensor<T, N...> v2, U&& u)
+Concrete<T, N...> tensor_for_each_binary(const Concrete<T, N...>& v1, const Concrete<T, N...>& v2, U&& u)
 {
-    tensor<T, N...> ret;
+    Concrete<T, N...> ret;
 
     if constexpr(sizeof...(N) == 1)
     {
@@ -598,6 +615,7 @@ struct tensor_indices
     std::array<int, sizeof...(Indices)> indices = {Indices...};
 };
 
+#if 0
 template<typename T, int... N, int... M, int... N1, int... M1>
 inline
 auto sum_multiply_fat(const tensor<T, N...>& t1, const tensor<T, M...>& t2, const tensor_indices<N1...>& b1, const tensor_indices<M1...>& b2)
@@ -611,23 +629,30 @@ auto sum_multiply_fat(const tensor<T, N...>& t1, const tensor<T, M...>& t2, cons
 
     //tensor<T, return_dimension>
 }
+#endif // 0
 
 template<typename T, int... N>
-struct inverse_metric : tensor<T, N...>
+struct inverse_metric : tensor_base<inverse_metric, T, N...>
 {
 
 };
 
-template<typename T, int... N>
-struct metric : tensor<T, N...>
+template<template<typename T, int... N> typename Concrete, typename T, int... N>
+struct metric_base : tensor_base<Concrete, T, N...>
 {
     virtual inverse_metric<T, N...> invert() const
     {
         inverse_metric<T, N...> r;
-        r.data = tensor<T, N...>::invert().data;
+        r.data = tensor_base<Concrete, T, N...>::invert().data;
 
         return r;
     }
+};
+
+template<typename T, int... N>
+struct metric : metric_base<metric, T, N...>
+{
+
 };
 
 template<typename T, int... N>
@@ -636,11 +661,17 @@ struct unit_metric : metric<T, N...>
     virtual inverse_metric<T, N...> invert() const override
     {
         inverse_metric<T, N...> r;
-        r.data = tensor<T, N...>::unit_invert().data;
+        r.data = tensor_base<metric, T, N...>::unit_invert().data;
 
         return r;
     }
 };
+
+template<typename TestTensor, typename T, int... N>
+concept MetricTensor = std::is_base_of_v<metric_base<TestTensor::template concrete_t, T, N...>, TestTensor>;
+
+template<typename TestTensor, typename T, int... N>
+concept SizedTensor = std::is_base_of_v<tensor_base<TestTensor::template concrete_t, T, N...>, TestTensor>;
 
 /*template<typename T>
 vec<3, T> operator*(const mat<3, T> m, const vec<3, T>& other)
