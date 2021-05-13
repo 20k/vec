@@ -133,6 +133,9 @@ void metric_inverse(const float m[16], float invOut[16])
 template<template<typename T, int... N> typename Concrete, typename T, int... N>
 struct tensor_base;
 
+template<typename T, int... N>
+struct tensor;
+
 template<template<typename T, int... N> typename Concrete, typename U, typename T, int... N>
 inline
 Concrete<T, N...> tensor_for_each_binary(const Concrete<T, N...>& v1, const Concrete<T, N...>& v2, U&& u);
@@ -155,6 +158,15 @@ struct tensor_base
     Concrete<T, N...> to_concrete()
     {
         return *this;
+    }
+
+    tensor<T, N...> to_tensor()
+    {
+        tensor<T, N...> ret;
+
+        ret.data = data;
+
+        return ret;
     }
 
     template<typename... V>
@@ -454,6 +466,9 @@ struct tensor : tensor_base<tensor, T, N...>
 
 };
 
+template<typename TestTensor, typename T, int... N>
+concept SizedTensor = std::is_base_of_v<tensor_base<TestTensor::template concrete_t, T, N...>, TestTensor>;
+
 template<typename T, int N>
 inline
 T sum_multiply(const tensor<T, N>& t1, const tensor<T, N>& t2)
@@ -463,6 +478,23 @@ T sum_multiply(const tensor<T, N>& t1, const tensor<T, N>& t2)
     for(int i=0; i < N; i++)
     {
         ret += t1.idx(i) * t2.idx(i);
+    }
+
+    return ret;
+}
+
+template<typename T, int N>
+inline
+T sum_multiply(const tensor<T, N, N>& t1, const tensor<T, N, N>& t2)
+{
+    T ret = 0;
+
+    for(int i=0; i < N; i++)
+    {
+        for(int j=0; j < N; j++)
+        {
+            ret += t1.idx(i, j) * t2.idx(i, j);
+        }
     }
 
     return ret;
@@ -669,9 +701,6 @@ struct unit_metric : metric<T, N...>
 
 template<typename TestTensor, typename T, int... N>
 concept MetricTensor = std::is_base_of_v<metric_base<TestTensor::template concrete_t, T, N...>, TestTensor>;
-
-template<typename TestTensor, typename T, int... N>
-concept SizedTensor = std::is_base_of_v<tensor_base<TestTensor::template concrete_t, T, N...>, TestTensor>;
 
 /*template<typename T>
 vec<3, T> operator*(const mat<3, T> m, const vec<3, T>& other)
