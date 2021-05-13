@@ -458,6 +458,11 @@ struct tensor_base
     {
         return tensor_for_each_unary(t2, [&](const T& v2){return v1 / v2;});
     }
+
+    friend Concrete<T, N...> operator-(const Concrete<T, N...>& t1)
+    {
+        return tensor_for_each_unary(t1, [](const T& v1){return -v1;});
+    }
 };
 
 template<typename T, int... N>
