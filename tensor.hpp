@@ -404,6 +404,13 @@ struct tensor_base
         return tensor_for_each_binary(t1, t2, [](const T& v1, const T& v2){return v1 + v2;});
     }
 
+    friend Concrete<T, N...>& operator+=(Concrete<T, N...>& t1, const Concrete<T, N...>& t2)
+    {
+        t1 = t1 + t2;
+
+        return t1;
+    }
+
     friend Concrete<T, N...> operator-(const Concrete<T, N...>& t1, const Concrete<T, N...>& t2)
     {
         return tensor_for_each_binary(t1, t2, [](const T& v1, const T& v2){return v1 - v2;});
