@@ -1272,6 +1272,9 @@ int random_select_with_weights(rng& my_rng, const std::vector<T>& weights)
 
     for(auto i : weights)
     {
+        if(i < 0)
+            i = 0;
+
         total_probability += i;
         accum.push_back(total_probability);
     }
