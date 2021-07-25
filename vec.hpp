@@ -8,6 +8,8 @@
 #include <random>
 #include <utility>
 #include <array>
+#include <string>
+#include <assert.h>
 
 #define M_PI		3.14159265358979323846
 #define M_PIf ((float)M_PI)
@@ -66,6 +68,16 @@ struct vec
     }*/
 
     constexpr vec<N, T>& operator=(const vec<N, T>& in) = default;
+
+    T& operator[](size_t idx)
+    {
+        return v[idx];
+    }
+
+    const T& operator[](size_t idx) const
+    {
+        return v[idx];
+    }
 
     T& x()
     {
@@ -162,7 +174,7 @@ struct vec
         }
     }
 
-    vec<N, T>& operator=(T val)
+    vec<N, T>& operator=(const T& val)
     {
         for(int i=0; i<N; i++)
         {
@@ -184,7 +196,7 @@ struct vec
         return r;
     }
 
-    constexpr vec<N, T> operator+(T other) const
+    constexpr vec<N, T> operator+(const T& other) const
     {
         vec<N, T> r;
 
@@ -209,7 +221,7 @@ struct vec
     }
 
 
-    constexpr vec<N, T> operator-(T other) const
+    constexpr vec<N, T> operator-(const T& other) const
     {
         vec<N, T> r;
 
@@ -236,7 +248,7 @@ struct vec
 
     ///beginnings of making this actually work properly
     template<typename U>
-    constexpr vec<N, T> operator*(U other) const
+    constexpr vec<N, T> operator*(const U& other) const
     {
         vec<N, T> r;
 
@@ -260,7 +272,7 @@ struct vec
         return r;
     }
 
-    constexpr vec<N, T> operator/(T other) const
+    constexpr vec<N, T> operator/(const T& other) const
     {
         vec<N, T> r;
 
@@ -300,28 +312,28 @@ struct vec
         return *this;
     }
 
-    constexpr vec<N, T>& operator+=(T other)
+    constexpr vec<N, T>& operator+=(const T& other)
     {
         *this = *this + other;
 
         return *this;
     }
 
-    constexpr vec<N, T>& operator-=(T other)
+    constexpr vec<N, T>& operator-=(const T& other)
     {
         *this = *this - other;
 
         return *this;
     }
 
-    constexpr vec<N, T>& operator*=(T other)
+    constexpr vec<N, T>& operator*=(const T& other)
     {
         *this = *this * other;
 
         return *this;
     }
 
-    constexpr vec<N, T>& operator/=(T other)
+    constexpr vec<N, T>& operator/=(const T& other)
     {
         *this = *this / other;
 
@@ -349,7 +361,7 @@ struct vec
 
         for(int i=0; i<N; i++)
         {
-            sqsum += v[i]*v[i];
+            sqsum = sqsum + v[i]*v[i];
         }
 
         return sqsum;
@@ -358,9 +370,11 @@ struct vec
     inline
     T length() const
     {
+        using namespace std;
+
         T l = squared_length();
 
-        T val = std::sqrt(l);
+        T val = sqrt(l);
 
         return val;
     }
@@ -474,14 +488,17 @@ struct vec
     {
         T len = length();
 
-        if(len < 0.00001f)
+        if constexpr(std::is_arithmetic_v<T>)
         {
-            vec<N, T> ret;
+            if(len < 0.00001f)
+            {
+                vec<N, T> ret;
 
-            for(int i=0; i<N; i++)
-                ret.v[i] = 0.f;
+                for(int i=0; i<N; i++)
+                    ret.v[i] = 0.f;
 
-            return ret;
+                return ret;
+            }
         }
 
         return (*this) / len;
@@ -596,7 +613,7 @@ struct vec
 
         vec<3, T> dir = *this;
 
-        float cangle = dot((vec<3, T>){0, 1, 0}, dir.norm());
+        float cangle = dot(vec<3, T>{0, 1, 0}, dir.norm());
 
         float angle2 = acos(cangle);
 
@@ -669,6 +686,178 @@ struct vec
         return os;
     }
 };
+
+struct unit_i_t{};
+
+template<typename T>
+struct complex
+{
+    T real = T();
+    T imaginary = T();
+
+    complex(){}
+    template<typename U, typename V>
+    complex(U v1, V v2) : real(v1), imaginary(v2) {}
+    template<typename U>
+    complex(U v1) : real(v1), imaginary(0) {}
+    complex(unit_i_t) : real(0), imaginary(1){}
+};
+
+template<typename T>
+inline
+complex<T> csqrt(const T& d1)
+{
+    T is_negative = signbit(d1);
+
+    T positive_sqrt = sqrt(fabs(d1));
+
+    return complex<T>(select(positive_sqrt, 0, is_negative), select(0, positive_sqrt, is_negative));
+}
+
+template<typename T>
+inline
+complex<T> operator+(const complex<T>& c1, const complex<T>& c2)
+{
+    return complex<T>(c1.real + c2.real, c1.imaginary + c2.imaginary);
+}
+
+template<typename T, typename U>
+inline
+complex<T> operator+(const complex<T>& c1, const U& c2)
+{
+    return c1 + complex<T>(c2, 0.f);
+}
+
+template<typename T, typename U>
+inline
+complex<T> operator+(const U& c1, const complex<T>& c2)
+{
+    return complex<T>(c1, 0.f) + c2;
+}
+
+template<typename T>
+inline
+complex<T> operator-(const complex<T>& c1, const complex<T>& c2)
+{
+    return complex<T>(c1.real - c2.real, c1.imaginary - c2.imaginary);
+}
+
+template<typename T>
+inline
+complex<T> operator-(const complex<T>& c1)
+{
+    return complex<T>(-c1.real, -c1.imaginary);
+}
+
+template<typename T>
+inline
+complex<T> operator*(const complex<T>& c1, const complex<T>& c2)
+{
+    return complex<T>(c1.real * c2.real - c1.imaginary * c2.imaginary, c1.imaginary * c2.real + c1.real * c2.imaginary);
+}
+
+template<typename T, typename U>
+inline
+complex<T> operator*(const complex<T>& c1, const U& c2)
+{
+    return c1 * complex<T>(c2, 0.f);
+}
+
+template<typename T, typename U>
+inline
+complex<T> operator*(const U& c1, const complex<T>& c2)
+{
+    return complex<T>(c1, 0.f) * c2;
+}
+
+template<typename T>
+inline
+complex<T> operator/(const complex<T>& c1, const complex<T>& c2)
+{
+    T divisor = c2.real * c2.real + c2.imaginary * c2.imaginary;
+
+    return complex<T>((c1.real * c2.real + c1.imaginary * c2.imaginary) / divisor, (c1.imaginary * c2.real - c1.real * c2.imaginary) / divisor);
+}
+
+template<typename T>
+inline
+complex<T> sin(const complex<T>& c1)
+{
+    return complex<T>(sin(c1.real) * cosh(c1.imaginary), cos(c1.real) * sinh(c1.imaginary));
+}
+
+template<typename T>
+inline
+complex<T> cos(const complex<T>& c1)
+{
+    return complex<T>(cos(c1.real) * cosh(c1.imaginary), -sin(c1.real) * sinh(c1.imaginary));
+}
+
+template<typename T>
+inline
+complex<T> conjugate(const complex<T>& c1)
+{
+    return complex<T>(c1.real, -c1.imaginary);
+}
+
+template<typename T>
+inline
+complex<T> makefinite(const complex<T>& c1)
+{
+    return complex<T>(makefinite(c1.real), makefinite(c1.imaginary));
+}
+
+template<typename T>
+inline
+T fabs(const complex<T>& c1)
+{
+    return sqrt(c1.real * c1.real + c1.imaginary * c1.imaginary);
+}
+
+template<typename T>
+inline
+T Imaginary(const complex<T>& c1)
+{
+    return c1.imaginary;
+}
+
+template<typename T>
+inline
+T Real(const complex<T>& c1)
+{
+    return c1.real;
+}
+
+template<typename T>
+inline
+complex<T> sqrt(const complex<T>& d1)
+{
+    T r_part = sqrt(max((d1.real + sqrt(d1.real * d1.real + d1.imaginary * d1.imaginary))/2, 0));
+    T i_part = sign(d1.imaginary) * sqrt(max((-d1.real + sqrt(d1.real * d1.real + d1.imaginary * d1.imaginary))/2, 0));
+
+    return complex<T>(r_part, i_part);
+}
+
+template<typename T>
+inline
+complex<T> pow(const complex<T>& d1, int exponent)
+{
+    complex<T> ret = d1;
+
+    for(int i=0; i < exponent - 1; i++)
+    {
+        ret = ret * d1;
+    }
+
+    return ret;
+}
+
+template<typename T>
+inline
+complex<T> expi(const T& d1)
+{
+    return complex<T>(cos(d1), sin(d1));
+}
 
 template<int N, typename T>
 inline
@@ -1044,17 +1233,18 @@ vec<N, T> randf()
 ///and also std::minstd_rand isn't a very good rng, so will be replaced with a T at a later date
 ///unfortunately the distributions in <random> are unspecified, so will not get the same results
 ///across platforms, making them useless for anything which needs reproducible random numbers, aka everything
+template<typename T>
 inline
-float rand_det_s(std::minstd_rand& rnd, float M, float MN)
+float rand_det_s(T& rnd, float M, float MN)
 {
     float scaled = (rnd() - rnd.min()) / (float)(rnd.max() - rnd.min() + 1.f);
 
     return scaled * (MN - M) + M;
 }
 
-template<int N, typename T>
+template<int N, typename T, typename U>
 inline
-vec<N, T> rand_det(std::minstd_rand& rnd, const vec<N, T>& M, const vec<N, T>& MN)
+vec<N, T> rand_det(U& rnd, const vec<N, T>& M, const vec<N, T>& MN)
 {
     vec<N, T> ret;
 
@@ -1223,7 +1413,17 @@ uint32_t rgba_to_uint(const vec<4, float>& rgba)
 inline
 uint32_t rgba_to_uint(const vec<3, float>& rgb)
 {
-    return rgba_to_uint((vec4f){rgb.v[0], rgb.v[1], rgb.v[2], 1.f});
+    return rgba_to_uint(vec4f{rgb.v[0], rgb.v[1], rgb.v[2], 1.f});
+}
+
+template<typename T>
+inline
+T srgb_to_lin(const T& in)
+{
+    if(in < 0.04045)
+        return in / 12.92;
+    else
+        return pow((in + 0.055) / 1.055, 2.4);
 }
 
 ///https://chilliant.blogspot.com/2012/08/srgb-approximations-for-hlsl.html
@@ -1235,10 +1435,7 @@ vec<N, T> srgb_to_lin(const vec<N, T>& in)
 
     for(int i=0; i < N; i++)
     {
-        if(in.v[i] < 0.04045)
-            ret.v[i] = in.v[i] / 12.92;
-        else
-            ret.v[i] = pow((in.v[i] + 0.055) / 1.055, 2.4);
+        ret[i] = srgb_to_lin(in[i]);
     }
 
     return ret;
@@ -1255,6 +1452,16 @@ constexpr vec<N, T> srgb_to_lin_approx(const vec<N, T>& in)
     0.305306011f * in * in * in;
 }
 
+template<typename T>
+inline
+T lin_to_srgb(const T& in)
+{
+    if(in <= 0.0031308)
+        return in * 12.92;
+    else
+        return 1.055 * pow(in, 1.0 / 2.4) - 0.055;
+}
+
 template<int N, typename T>
 inline
 vec<N, T> lin_to_srgb(const vec<N, T>& in)
@@ -1263,10 +1470,7 @@ vec<N, T> lin_to_srgb(const vec<N, T>& in)
 
     for(int i=0; i < N; i++)
     {
-        if(in.v[i] <= 0.0031308)
-            ret.v[i] = in.v[i] * 12.92;
-        else
-            ret.v[i] = 1.055 * pow(in.v[i], 1.0 / 2.4) - 0.055;
+        ret[i] = lin_to_srgb(in[i]);
     }
 
     return ret;
@@ -1281,6 +1485,28 @@ constexpr vec<N, T> lin_to_srgb_approx(const vec<N, T>& in)
     vec<N, T> S3 = sqrtf(S2);
 
     return 0.662002687f * S1 + 0.684122060f * S2 - 0.323583601f * S3 - 0.0225411470f * in;
+}
+
+template<typename T>
+inline
+constexpr vec<3, T> linear_rgb_to_XYZ(const vec<3, T>& in)
+{
+    float X = 0.4124564f * in.x() + 0.3575761f * in.y() + 0.1804375f * in.z();
+    float Y = 0.2126729f * in.x() + 0.7151522f * in.y() + 0.0721750f * in.z();
+    float Z = 0.0193339f * in.x() + 0.1191920f * in.y() + 0.9503041f * in.z();
+
+    return {X, Y, Z};
+}
+
+template<typename T>
+inline
+constexpr vec<3, T> XYZ_to_linear_rgb(const vec<3, T>& in)
+{
+    float r = 3.2404542f * in.x() + -1.5371385f * in.y() + -0.4985314f * in.z();
+    float g = -0.9692660f * in.x() + 1.8760108f * in.y() + 0.0415560f * in.z();
+    float b = 0.0556434f * in.x() + -0.2040259f * in.y() + 1.0572252f * in.z();
+
+    return {r, g, b};
 }
 
 inline vec3f rot(const vec3f& p1, const vec3f& pos, const vec3f& rot)
@@ -1394,13 +1620,13 @@ constexpr inline vec<N, T> operator-(const vec<N, T>& v1)
 }
 
 template<int N, typename T, typename U>
-constexpr inline vec<N, U> operator*(T v, const vec<N, U>& v1)
+constexpr inline vec<N, U> operator*(const T& v, const vec<N, U>& v1)
 {
     return v1 * v;
 }
 
 template<int N, typename T>
-constexpr inline vec<N, T> operator+(T v, const vec<N, T>& v1)
+constexpr inline vec<N, T> operator+(const T& v, const vec<N, T>& v1)
 {
     return v1 + v;
 }
@@ -1413,7 +1639,7 @@ constexpr inline vec<N, T> operator+(T v, const vec<N, T>& v1)
 ///should convert these functions to be N/T
 
 template<int N, typename T>
-constexpr inline vec<N, T> operator/(T v, const vec<N, T>& v1)
+constexpr inline vec<N, T> operator/(const T& v, const vec<N, T>& v1)
 {
     vec<N, T> top;
 
@@ -2044,7 +2270,7 @@ inline std::vector<vec3f> sort_anticlockwise(const T& in, const vec3f& about, st
 
     vec3f centre_point = about.back_rot(0.f, euler);
 
-    vec2f centre_2d = (vec2f){centre_point.v[0], centre_point.v[2]};
+    vec2f centre_2d = vec2f{centre_point.v[0], centre_point.v[2]};
 
     for(int i=0; i<num; i++)
     {
@@ -2052,7 +2278,7 @@ inline std::vector<vec3f> sort_anticlockwise(const T& in, const vec3f& about, st
 
         vec3f rotated = vec_pos.back_rot(0.f, euler);
 
-        vec2f rot_2d = (vec2f){rotated.v[0], rotated.v[2]};
+        vec2f rot_2d = vec2f{rotated.v[0], rotated.v[2]};
 
         vec2f rel = rot_2d - centre_2d;
 
@@ -2106,7 +2332,7 @@ float circle_minimum_distance(float v1, float v2)
     float d2 = fabs(v2 - v1 - M_PI*2.f);
     float d3 = fabs(v2 - v1 + M_PI*2.f);
 
-    vec3f v = (vec3f){d1, d2, d3};
+    vec3f v = vec3f{d1, d2, d3};
 
     if(v.which_element_minimum() == 0)
     {
@@ -2216,8 +2442,8 @@ bool rect_intersects_doughnut(vec2f rect_pos, vec2f rect_half_dim, vec2f circle_
     ///the smaller circle
 
     vec2f tl = rect_pos - rect_half_dim;
-    vec2f tr = rect_pos + (vec2f){rect_half_dim.x(), -rect_half_dim.y()};
-    vec2f bl = rect_pos + (vec2f){-rect_half_dim.x(), rect_half_dim.y()};
+    vec2f tr = rect_pos + vec2f{rect_half_dim.x(), -rect_half_dim.y()};
+    vec2f bl = rect_pos + vec2f{-rect_half_dim.x(), rect_half_dim.y()};
     vec2f br = rect_pos + rect_half_dim;
 
     vec2f rtl = tl - circle_pos;
@@ -2680,7 +2906,7 @@ struct mat
         return ret;
     }
 
-    mat<3, T> operator*(T other) const
+    mat<3, T> operator*(const T& other) const
     {
         mat<3, T> ret;
 
@@ -2852,89 +3078,73 @@ mat3f axis_angle_to_mat(vec3f axis, float angle)
     return m;
 }
 
-struct quaternion
+template<typename T>
+struct quaternion_base
 {
-    vec4f q = {0,0,0,1};
+    vec<4, T> q = {0,0,0,1};
 
-    /*quaternion()
-    {
-        q = {0,0,0,1};
-    }*/
-
-    void load_from_matrix(const mat3f& m)
+    void load_from_matrix(const mat<3, T>& m)
     {
         vec4f l;
 
-        float m00 = m.v[0][0];
-        float m11 = m.v[1][1];
-        float m22 = m.v[2][2];
+        T m00 = m.v[0][0];
+        T m11 = m.v[1][1];
+        T m22 = m.v[2][2];
 
         l.v[3] = sqrt( max( 0.f, 1 + m00 + m11 + m22 ) ) / 2;
         l.v[0] = sqrt( max( 0.f, 1 + m00 - m11 - m22 ) ) / 2;
         l.v[1] = sqrt( max( 0.f, 1 - m00 + m11 - m22 ) ) / 2;
         l.v[2] = sqrt( max( 0.f, 1 - m00 - m11 + m22 ) ) / 2;
 
-        float m21 = m.v[2][1];
-        float m12 = m.v[1][2];
-        float m02 = m.v[0][2];
-        float m20 = m.v[2][0];
-        float m10 = m.v[1][0];
-        float m01 = m.v[0][1];
+        T m21 = m.v[2][1];
+        T m12 = m.v[1][2];
+        T m02 = m.v[0][2];
+        T m20 = m.v[2][0];
+        T m10 = m.v[1][0];
+        T m01 = m.v[0][1];
 
         //int s1 = signum(m21 - m12);
         //int s2 = signum(m02 - m20);
         //int s3 = signum(m10 - m01);
 
-        l.v[0] = std::copysign( l.v[0], m21 - m12 );
-        l.v[1] = std::copysign( l.v[1], m02 - m20 );
-        l.v[2] = std::copysign( l.v[2], m10 - m01 );
+        using namespace std;
+
+        l.v[0] = copysign( l.v[0], m21 - m12 );
+        l.v[1] = copysign( l.v[1], m02 - m20 );
+        l.v[2] = copysign( l.v[2], m10 - m01 );
 
         q = l;
     }
 
     ///this * ret == q
-    quaternion get_difference(quaternion q) const
+    quaternion_base<T> get_difference(quaternion_base<T> q) const
     {
-        mat3f t = get_rotation_matrix();
-        mat3f o = q.get_rotation_matrix();
-
-        ///A*q1 = q2
-        ///A = q2 * q1'
-
-        ///q1 * A = q2
-        ///A = q1'q2
-
-        mat3f diff = t.transp() * o;
-
-        quaternion ret;
-        ret.load_from_matrix(diff);
-
-        return ret;
+        return inverse() * q;
     }
 
-    void load_from_euler(vec3f _rot)
+    void load_from_euler(vec<3, T> _rot)
     {
-        mat3f mat;
+        mat<3, T> mat;
         mat.load_rotation_matrix(_rot);
 
         load_from_matrix(mat);
     }
 
-    void from_vec(const vec4f& raw)
+    void from_vec(const vec<4, T>& raw)
     {
         q = raw;
     }
 
-    quaternion operator*(const quaternion& other) const
+    quaternion_base<T> operator*(const quaternion_base<T>& other) const
     {
-        quaternion ret;
+        quaternion_base<T> ret;
 
         ret.q.v[0] = q.v[3] * other.q.v[0] + q.v[0] * other.q.v[3] + q.v[1] * other.q.v[2] - q.v[2] * other.q.v[1];
         ret.q.v[1] = q.v[3] * other.q.v[1] + q.v[1] * other.q.v[3] + q.v[2] * other.q.v[0] - q.v[0] * other.q.v[2];
         ret.q.v[2] = q.v[3] * other.q.v[2] + q.v[2] * other.q.v[3] + q.v[0] * other.q.v[1] - q.v[1] * other.q.v[0];
         ret.q.v[3] = q.v[3] * other.q.v[3] - q.v[0] * other.q.v[0] - q.v[1] * other.q.v[1] - q.v[2] * other.q.v[2];
 
-        return ret;
+        return ret.norm();
     }
 
     ///http://number-none.com/product/Understanding%20Slerp,%20Then%20Not%20Using%20It/
@@ -2946,7 +3156,7 @@ struct quaternion
     ///seems more legit
     ///q1.q * (1.f - t) + q2.q * t, perhaps backwards to what you'd expect
     static
-    quaternion slerp(const quaternion& q1, const quaternion& q2, float t)
+    quaternion_base<T> slerp(const quaternion_base<T>& q1, const quaternion_base<T>& q2, float t)
     {
         float d = dot(q1.q, q2.q);
 
@@ -2954,15 +3164,13 @@ struct quaternion
 
         if(d > threshold)
         {
-            quaternion nq;
+            quaternion_base<T> nq;
 
             nq.q = q1.q * (1.f - t) + q2.q * t;
 
             ///can... can this even not be normalised?
             ///i'm starting to trust this code less
-            nq.q = nq.q.norm();
-
-            return nq;
+            return nq.norm();
         }
 
         d = clamp(d, -1.f, 1.f);
@@ -2983,21 +3191,25 @@ struct quaternion
 
         if(is_negative)
         {
-            return {A * q1.q - B * q2.q};
+            quaternion_base<T> ret{A * q1.q - B * q2.q};
+
+            return ret.norm();
         }
 
-        return {A * q1.q + B * q2.q};
+        quaternion_base<T> ret{A * q1.q + B * q2.q};
+
+        return ret.norm();
     }
 
     ///http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToMatrix/
-    mat3f get_rotation_matrix() const
+    mat<3, T> get_rotation_matrix() const
     {
-        mat3f m;
+        mat<3, T> m;
 
-        float qx = q.v[0];
-        float qy = q.v[1];
-        float qz = q.v[2];
-        float qw = q.v[3];
+        T qx = q.v[0];
+        T qy = q.v[1];
+        T qz = q.v[2];
+        T qw = q.v[3];
 
         m.v[0][0] = 1 - 2*qy*qy - 2*qz*qz;
         m.v[0][1] = 2*qx*qy - 2*qz*qw;
@@ -3014,7 +3226,7 @@ struct quaternion
         return m;
     }
 
-    quaternion norm() const
+    quaternion_base<T> norm() const
     {
         /*float w = q.v[3];
 
@@ -3027,16 +3239,16 @@ struct quaternion
 
         return ret;*/
 
-        quaternion ret;
+        quaternion_base<T> ret;
 
         ret.q = q.norm();
 
         return ret;
     }
 
-    quaternion conjugate() const
+    quaternion_base<T> conjugate() const
     {
-        quaternion ret;
+        quaternion_base<T> ret;
 
         ret.q = q;
 
@@ -3047,76 +3259,83 @@ struct quaternion
         return ret;
     }
 
-    quaternion inverse() const
+    quaternion_base<T> inverse() const
     {
-        quaternion conj = conjugate();
+        quaternion_base<T> conj = conjugate();
 
         vec4f l = conj.q / (q.lengthf() * q.lengthf());
 
-        quaternion q;
+        quaternion_base<T> q;
         q.q = l;
 
         return q;
     }
 
-    vec4f to_axis_angle() const
+    vec<4, T> to_axis_angle() const
     {
-        float qx = q.v[0];
-        float qy = q.v[1];
-        float qz = q.v[2];
-        float qw = q.v[3];
+        T qx = q.v[0];
+        T qy = q.v[1];
+        T qz = q.v[2];
+        T qw = q.v[3];
 
-        float angle = 2 * acos(qw);
-        float x = qx / sqrt(1-qw*qw);
-        float y = qy / sqrt(1-qw*qw);
-        float z = qz / sqrt(1-qw*qw);
+        T angle = 2 * acos(qw);
+        T x = qx / sqrt(1-qw*qw);
+        T y = qy / sqrt(1-qw*qw);
+        T z = qz / sqrt(1-qw*qw);
 
-        if(qw >= 0.999f)
+        if(qw >= 0.99999f)
         {
             x = 1;
             y = 0;
             z = 0;
+            angle = 0;
         }
 
-        return {x, y, z, angle};
+        vec3f dir = {x, y, z};
+        dir = dir.norm();
+
+        return {dir.x(), dir.y(), dir.z(), angle};
     }
 
-    void load_from_axis_angle(vec4f aa)
+    void load_from_axis_angle(const vec<4, T>& aa)
     {
-        q.v[0] = aa.v[0] * sin(aa.v[3]/2);
-        q.v[1] = aa.v[1] * sin(aa.v[3]/2);
-        q.v[2] = aa.v[2] * sin(aa.v[3]/2);
-        q.v[3] = cos(aa.v[3]/2);
+        vec<3, T> axis = aa.xyz().norm();
+        T angle = aa.w();
+
+        q.v[0] = axis.x() * sin(angle/2);
+        q.v[1] = axis.y() * sin(angle/2);
+        q.v[2] = axis.z() * sin(angle/2);
+        q.v[3] = cos(angle/2);
 
         q = q.norm();
     }
 
-    float x()
+    T x()
     {
        return q.x();
     }
 
-    float y()
+    T y()
     {
        return q.y();
     }
 
-    float z()
+    T z()
     {
        return q.z();
     }
 
-    float w()
+    T w()
     {
        return q.w();
     }
 
-    quaternion identity() const
+    quaternion_base<T> identity() const
     {
         return {{0, 0, 0, 1}};
     }
 
-    friend std::ostream& operator<<(std::ostream& os, const quaternion& v1)
+    friend std::ostream& operator<<(std::ostream& os, const quaternion_base<T>& v1)
     {
         for(int i=0; i<4-1; i++)
         {
@@ -3127,22 +3346,52 @@ struct quaternion
 
         return os;
     }
+
+    T get_scalar() const
+    {
+        return q.w();
+    }
+
+    vec<3, T> get_vector() const
+    {
+        return {q.x(), q.y(), q.z()};
+    }
 };
 
+template<typename T>
 inline
-vec3f rot_quat(vec3f point, quaternion q)
+T angle_between_quaternions(const quaternion_base<T>& q1, const quaternion_base<T>& q2)
+{
+    auto Z = q1.conjugate() * q2;
+
+    return 2 * atan2(Z.get_vector().length(), Z.get_scalar());
+}
+
+template<typename T>
+inline
+quaternion_base<T> slerp(const quaternion_base<T>& q1, const quaternion_base<T>& q2, const T& a)
+{
+    return quaternion_base<T>::slerp(q1, q2, a);
+}
+
+using quaternion = quaternion_base<float>;
+
+template<typename T>
+inline
+vec<3, T> rot_quat(vec<3, T> point, quaternion_base<T> q)
 {
     q = q.norm();
 
-    vec3f t = 2.f * cross(q.q.xyz(), point);
+    vec<3, T> t = 2.f * cross(q.q.xyz(), point);
 
     return point + q.q.w() * t + cross(q.q.xyz(), t);
 }
 
+template<typename T>
 inline
-vec3f back_rot_quat(vec3f point, quaternion q)
+vec<3, T> back_rot_quat(vec<3, T> point, quaternion_base<T> q)
 {
-    vec4f conj = q.q;
+    vec<4, T> conj = q.q;
 
     conj.xyz() = -conj.xyz();
 
@@ -3229,19 +3478,5 @@ mat3f leapquat_to_mat(quaternion q)
 }
 
 typedef quaternion quat;
-
-
-/*template<typename T>
-vec<3, T> operator*(const mat<3, T> m, const vec<3, T>& other)
-{
-    vec<3, T> val;
-
-    val.v[0] = m.v[0][0] * other.v[0] + m.v[0][1] * other.v[1] + m.v[0][2] * other.v[2];
-    val.v[1] = m.v[1][0] * other.v[0] + m.v[1][1] * other.v[1] + m.v[1][2] * other.v[2];
-    val.v[2] = m.v[2][0] * other.v[0] + m.v[2][1] * other.v[1] + m.v[2][2] * other.v[2];
-
-    return val;
-}*/
-
 
 #endif // VEC_HPP_INCLUDED
