@@ -185,7 +185,7 @@ struct tensor_base
         return index_md_array(data, vals...);
     }
 
-    T det() const
+    T symmetric_det3() const
     {
         assert(sizeof...(N) == 2);
         assert(((N == 3) && ...));
@@ -201,11 +201,15 @@ struct tensor_base
         T a31 = idx(2, 0);
         T a32 = idx(2, 1);
         T a33 = idx(2, 2);
+
+        a21 = a12;
+        a31 = a13;
+        a32 = a23;
 
         return a11*a22*a33 + a21*a32*a13 + a31*a12*a23 - a11*a32*a23 - a31*a22*a13 - a21*a12*a33;
     }
 
-    Concrete<T, N...> unit_invert() const
+    Concrete<T, N...> symmetric_unit_invert() const
     {
         assert(sizeof...(N) == 2);
         assert(((N == 3) && ...));
@@ -221,6 +225,10 @@ struct tensor_base
         T a31 = idx(2, 0);
         T a32 = idx(2, 1);
         T a33 = idx(2, 2);
+
+        a21 = a12;
+        a31 = a13;
+        a32 = a23;
 
         T x0 = (a22 * a33 - a23 * a32);
         T y0 = (a13 * a32 - a12 * a33);
@@ -246,19 +254,23 @@ struct tensor_base
         ret.idx(2, 1) = y2;
         ret.idx(2, 2) = z2;
 
+        ret.idx(1, 0) = ret.idx(0, 1);
+        ret.idx(2, 0) = ret.idx(0, 2);
+        ret.idx(2, 1) = ret.idx(1, 2);
+
         return ret;
     }
 
-    Concrete<T, N...> invert() const
+    Concrete<T, N...> symmetric_invert() const
     {
         assert(sizeof...(N) == 2);
         assert((((N == 3) && ...)) || ((N == 4) && ...));
 
         if constexpr(((N == 3) && ...))
         {
-            T d = 1/det();
+            T d = 1/symmetric_det3();
 
-            Concrete<T, N...> ret = unit_invert();
+            Concrete<T, N...> ret = symmetric_unit_invert();
 
             ret.idx(0, 0) = ret.idx(0, 0) * d;
             ret.idx(0, 1) = ret.idx(0, 1) * d;
@@ -684,10 +696,15 @@ struct inverse_metric : tensor_base<inverse_metric, T, N...>
 template<template<typename T, int... N> typename Concrete, typename T, int... N>
 struct metric_base : tensor_base<Concrete, T, N...>
 {
+    T det() const
+    {
+        return tensor_base<Concrete, T, N...>::symmetric_det3();
+    }
+
     virtual inverse_metric<T, N...> invert() const
     {
         inverse_metric<T, N...> r;
-        r.data = tensor_base<Concrete, T, N...>::invert().data;
+        r.data = tensor_base<Concrete, T, N...>::symmetric_invert().data;
 
         return r;
     }
@@ -705,7 +722,7 @@ struct unit_metric : metric<T, N...>
     virtual inverse_metric<T, N...> invert() const override
     {
         inverse_metric<T, N...> r;
-        r.data = tensor_base<metric, T, N...>::unit_invert().data;
+        r.data = tensor_base<metric, T, N...>::symmetric_unit_invert().data;
 
         return r;
     }
