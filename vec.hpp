@@ -1272,6 +1272,9 @@ int random_select_with_weights(rng& my_rng, const std::vector<T>& weights)
 
     for(auto i : weights)
     {
+        if(i < 0)
+            i = 0;
+
         total_probability += i;
         accum.push_back(total_probability);
     }
@@ -1301,8 +1304,8 @@ int random_select_with_weights(rng& my_rng, const std::vector<T>& weights)
 
     for(int i=0; i < (int)weights.size(); i++)
     {
-        float left_probability = (i == 0) ? 0 : weights[i-1];
-        float my_probability = weights[i];
+        float left_probability = (i == 0) ? 0 : accum[i-1];
+        float my_probability = accum[i];
 
         if(val >= left_probability && val < my_probability)
             return i;
