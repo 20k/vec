@@ -173,7 +173,7 @@ struct tensor_base
     template<typename U>
     using value_t = T;
 
-    md_array<T, N...> data;
+    md_array<T, N...> data{};
 
     Concrete<T, N...> to_concrete()
     {
