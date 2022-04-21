@@ -9,6 +9,26 @@ constexpr int N_to_size()
     return (N * ...);
 }
 
+template<int N, int... M>
+constexpr int get_first_of()
+{
+    return N;
+}
+
+template<int N, int... M>
+inline
+constexpr int get_second_of()
+{
+    return get_first_of<M...>();
+}
+
+template<int N, int... M>
+inline
+constexpr int get_third_of()
+{
+    return get_second_of<M...>();
+}
+
 template<typename T, size_t size, size_t... sizes>
 struct md_array_impl
 {
@@ -411,6 +431,87 @@ struct tensor_base
         assert(false);
     }
 
+    T x() const
+    {
+        static_assert(sizeof...(N) == 1);
+        static_assert(((N == 3) && ...));
+
+        return idx(0);
+    }
+
+    T y() const
+    {
+        static_assert(sizeof...(N) == 1);
+        static_assert(((N == 3) && ...));
+
+        return idx(1);
+    }
+
+    T z() const
+    {
+        static_assert(sizeof...(N) == 1);
+        static_assert(((N == 3) && ...));
+
+        return idx(2);
+    }
+
+    T& x()
+    {
+        static_assert(sizeof...(N) == 1);
+        static_assert(((N == 3) && ...));
+
+        return idx(0);
+    }
+
+    T& y()
+    {
+        static_assert(sizeof...(N) == 1);
+        static_assert(((N == 3) && ...));
+
+        return idx(1);
+    }
+
+    T& z()
+    {
+        static_assert(sizeof...(N) == 1);
+        static_assert(((N == 3) && ...));
+
+        return idx(2);
+    }
+
+    T& operator[](size_t index)
+    {
+        static_assert(sizeof...(N) == 1);
+
+        return idx(index);
+    }
+
+    const T& operator[](size_t index) const
+    {
+        static_assert(sizeof...(N) == 1);
+
+        return idx(index);
+    }
+
+    T squared_length() const
+    {
+        static_assert(sizeof...(N) == 1);
+
+        T ret = 0;
+
+        for(size_t i = 0; i < get_first_of<N...>(); i++)
+        {
+            ret += idx(i) * idx(i);
+        }
+
+        return ret;
+    }
+
+    T length() const
+    {
+        return sqrt(squared_length());
+    }
+
     friend Concrete<T, N...> operator+(const Concrete<T, N...>& t1, const Concrete<T, N...>& t2)
     {
         return tensor_for_each_binary(t1, t2, [](const T& v1, const T& v2){return v1 + v2;});
@@ -536,27 +637,6 @@ T sum(const tensor<T, N>& t1)
     }
 
     return ret;
-}
-
-template<int N, int... M>
-inline
-int get_first_of()
-{
-    return N;
-}
-
-template<int N, int... M>
-inline
-int get_second_of()
-{
-    return get_first_of<M...>();
-}
-
-template<int N, int... M>
-inline
-int get_third_of()
-{
-    return get_second_of<M...>();
 }
 
 template<template<typename T, int... N> typename Concrete, typename U, typename T, int... N>
@@ -730,6 +810,20 @@ struct unit_metric : metric<T, N...>
 
 template<typename TestTensor, typename T, int... N>
 concept MetricTensor = std::is_base_of_v<metric_base<TestTensor::template concrete_t, T, N...>, TestTensor>;
+
+
+template<typename T, int... N>
+inline
+tensor<T, N...> round(const tensor<T, N...>& v)
+{
+    return tensor_for_each_unary(v, [](const T& in)
+    {
+        using namespace std;
+
+        return round(in);
+    });
+}
+
 
 /*template<typename T>
 vec<3, T> operator*(const mat<3, T> m, const vec<3, T>& other)
