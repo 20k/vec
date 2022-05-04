@@ -180,7 +180,7 @@ struct tensor_base
         return *this;
     }
 
-    tensor<T, N...> to_tensor()
+    tensor<T, N...> to_tensor() const
     {
         tensor<T, N...> ret;
 
