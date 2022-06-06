@@ -340,6 +340,25 @@ struct vec
         return *this;
     }
 
+    auto begin() -> decltype(v.begin())
+    {
+        return v.begin();
+    }
+
+    auto end() -> decltype(v.end())
+    {
+        return v.end();
+    }
+
+    auto begin() const -> decltype(v.begin())
+    {
+        return v.begin();
+    }
+
+    auto end() const -> decltype(v.end())
+    {
+        return v.end();
+    }
 
     template<typename U, typename V>
     vec<N, U> map(V func)
