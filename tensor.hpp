@@ -459,6 +459,8 @@ struct tensor_base
     {
         static_assert(sizeof...(N) == 1);
         static_assert(((N >= 4) && ...));
+
+        return idx(3);
     }
 
     T& x()
@@ -489,6 +491,8 @@ struct tensor_base
     {
         static_assert(sizeof...(N) == 1);
         static_assert(((N >= 4) && ...));
+
+        return idx(3);
     }
 
     T& operator[](size_t index)
