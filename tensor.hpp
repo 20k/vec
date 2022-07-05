@@ -434,7 +434,7 @@ struct tensor_base
     T x() const
     {
         static_assert(sizeof...(N) == 1);
-        static_assert(((N == 3) && ...));
+        static_assert(((N >= 3) && ...));
 
         return idx(0);
     }
@@ -442,7 +442,7 @@ struct tensor_base
     T y() const
     {
         static_assert(sizeof...(N) == 1);
-        static_assert(((N == 3) && ...));
+        static_assert(((N >= 3) && ...));
 
         return idx(1);
     }
@@ -450,15 +450,21 @@ struct tensor_base
     T z() const
     {
         static_assert(sizeof...(N) == 1);
-        static_assert(((N == 3) && ...));
+        static_assert(((N >= 3) && ...));
 
         return idx(2);
+    }
+
+    T w() const
+    {
+        static_assert(sizeof...(N) == 1);
+        static_assert(((N >= 4) && ...));
     }
 
     T& x()
     {
         static_assert(sizeof...(N) == 1);
-        static_assert(((N == 3) && ...));
+        static_assert(((N >= 3) && ...));
 
         return idx(0);
     }
@@ -466,7 +472,7 @@ struct tensor_base
     T& y()
     {
         static_assert(sizeof...(N) == 1);
-        static_assert(((N == 3) && ...));
+        static_assert(((N >= 3) && ...));
 
         return idx(1);
     }
@@ -474,9 +480,15 @@ struct tensor_base
     T& z()
     {
         static_assert(sizeof...(N) == 1);
-        static_assert(((N == 3) && ...));
+        static_assert(((N >= 3) && ...));
 
         return idx(2);
+    }
+
+    T& w()
+    {
+        static_assert(sizeof...(N) == 1);
+        static_assert(((N >= 4) && ...));
     }
 
     T& operator[](size_t index)
