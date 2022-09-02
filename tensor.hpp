@@ -162,7 +162,7 @@ Concrete<T, N...> tensor_for_each_binary(const Concrete<T, N...>& v1, const Conc
 
 template<template<typename T, int... N> typename Concrete, typename U, typename T, int... N>
 inline
-Concrete<T, N...> tensor_for_each_unary(const Concrete<T, N...>& v, U&& u);
+auto tensor_for_each_unary(const Concrete<T, N...>& v, U&& u);
 
 template<template<typename T, int... N> typename Concrete, typename T, int... N>
 struct tensor_base
@@ -175,7 +175,7 @@ struct tensor_base
 
     md_array<T, N...> data{};
 
-    Concrete<T, N...> to_concrete()
+    Concrete<T, N...> to_concrete() const
     {
         return *this;
     }
@@ -588,7 +588,11 @@ struct tensor_base
 template<typename T, int... N>
 struct tensor : tensor_base<tensor, T, N...>
 {
-
+    template<typename U>
+    tensor<U, N...> as() const
+    {
+        return tensor_for_each_unary(*this, [](const T& v1){return U{v1};});
+    }
 };
 
 template<typename TestTensor, typename T, int... N>
@@ -641,9 +645,11 @@ T sum(const tensor<T, N>& t1)
 
 template<template<typename T, int... N> typename Concrete, typename U, typename T, int... N>
 inline
-Concrete<T, N...> tensor_for_each_unary(const Concrete<T, N...>& v, U&& u)
+auto tensor_for_each_unary(const Concrete<T, N...>& v, U&& u)
 {
-    Concrete<T, N...> ret;
+    using result_t = decltype(u(std::declval<T>()));
+
+    Concrete<result_t, N...> ret;
 
     if constexpr(sizeof...(N) == 1)
     {
