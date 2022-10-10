@@ -846,10 +846,9 @@ tensor<T, N...> round(const tensor<T, N...>& v)
     });
 }
 
-
-template<typename T, int N>
+template<typename T, int N, typename U>
 inline
-tensor<T, N> raise_index_impl(const tensor<T, N>& mT, const inverse_metric<T, N, N>& met, int index)
+tensor<T, N> sum_symmetric(const tensor<T, N>& mT, const U& met, int index)
 {
     assert(index == 0);
 
@@ -870,9 +869,9 @@ tensor<T, N> raise_index_impl(const tensor<T, N>& mT, const inverse_metric<T, N,
     return ret;
 }
 
-template<typename T, int N>
+template<typename T, int N, typename U>
 inline
-tensor<T, N, N> raise_index_impl(const tensor<T, N, N>& mT, const inverse_metric<T, N, N>& met, int index)
+tensor<T, N, N> sum_symmetric(const tensor<T, N, N>& mT, const U& met, int index)
 {
     tensor<T, N, N> ret;
 
@@ -902,9 +901,9 @@ tensor<T, N, N> raise_index_impl(const tensor<T, N, N>& mT, const inverse_metric
     return ret;
 }
 
-template<typename T, int N>
+template<typename T, int N, typename U>
 inline
-tensor<T, N, N, N> raise_index_impl(const tensor<T, N, N, N>& mT, const inverse_metric<T, N, N>& met, int index)
+tensor<T, N, N, N> sum_symmetric(const tensor<T, N, N, N>& mT, const U& met, int index)
 {
     tensor<T, N, N, N> ret;
 
@@ -946,9 +945,15 @@ template<typename T, int U, int... N>
 inline
 tensor<T, N...> raise_index(const tensor<T, N...>& mT, const inverse_metric<T, U, U>& met, int index)
 {
-    return raise_index_impl(mT, met, index);
+    return sum_symmetric(mT, met, index);
 }
 
+template<typename T, int U, int... N>
+inline
+tensor<T, N...> lower_index(const tensor<T, N...>& mT, const metric<T, U, U>& met, int index)
+{
+    return sum_symmetric(mT, met, index);
+}
 
 /*template<typename T>
 vec<3, T> operator*(const mat<3, T> m, const vec<3, T>& other)
