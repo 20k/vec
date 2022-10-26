@@ -810,6 +810,8 @@ struct metric_base : tensor_base<Concrete, T, N...>
 
         return r;
     }
+
+    virtual ~metric_base(){}
 };
 
 template<typename T, int... N>
