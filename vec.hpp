@@ -160,6 +160,11 @@ struct vec
         return {v[0], v[1], v[2]};
     }
 
+    vec<3, T> yzw() const requires(N >= 4)
+    {
+        return {v[1], v[2], v[3]};
+    }
+
     ///lets modernise the code a little
     constexpr vec() : v{}
     {
