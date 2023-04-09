@@ -91,31 +91,43 @@ struct vec
 
     T& y()
     {
+        static_assert(N >= 2);
+
         return v[1];
     }
 
     T y() const
     {
+        static_assert(N >= 2);
+
         return v[1];
     }
 
     T& z()
     {
+        static_assert(N >= 3);
+
         return v[2];
     }
 
     T z() const
     {
+        static_assert(N >= 3);
+
         return v[2];
     }
 
     T& w()
     {
+        static_assert(N >= 4);
+
         return v[3];
     }
 
     T w() const
     {
+        static_assert(N >= 4);
+
         return v[3];
     }
 
@@ -238,7 +250,6 @@ struct vec
         return r;
     }
 
-
     constexpr vec<N, T> operator*(const vec<N, T>& other) const
     {
         vec<N, T> r;
@@ -251,9 +262,7 @@ struct vec
         return r;
     }
 
-    ///beginnings of making this actually work properly
-    template<typename U>
-    constexpr vec<N, T> operator*(const U& other) const
+    constexpr vec<N, T> operator*(const T& other) const
     {
         vec<N, T> r;
 
@@ -345,22 +354,74 @@ struct vec
         return *this;
     }
 
-    auto begin() -> decltype(v.begin())
+    friend
+    constexpr vec<N, T> operator-(const vec<N, T>& v1)
+    {
+        vec<N, T> ret;
+
+        for(int i=0; i<N; i++)
+        {
+            ret.v[i] = -v1.v[i];
+        }
+
+        return ret;
+    }
+
+    friend
+    constexpr vec<N, T> operator*(const T& v, const vec<N, T>& v1)
+    {
+        vec<N, T> ret;
+
+        for(int i=0; i<N; i++)
+        {
+            ret.v[i] = v * v1.v[i];
+        }
+
+        return ret;
+    }
+
+    friend
+    constexpr vec<N, T> operator+(const T& v, const vec<N, T>& v1)
+    {
+        vec<N, T> ret;
+
+        for(int i=0; i<N; i++)
+        {
+            ret.v[i] = v + v1.v[i];
+        }
+
+        return ret;
+    }
+
+    friend
+    constexpr vec<N, T> operator/(const T& v, const vec<N, T>& v1)
+    {
+        vec<N, T> top;
+
+        for(int i=0; i<N; i++)
+            top.v[i] = v;
+
+        return top / v1;
+    }
+
+    auto operator<=>(const vec<N, T>&) const = default;
+
+    auto begin()
     {
         return v.begin();
     }
 
-    auto end() -> decltype(v.end())
+    auto end()
     {
         return v.end();
     }
 
-    auto begin() const -> decltype(v.begin())
+    auto begin() const
     {
         return v.begin();
     }
 
-    auto end() const -> decltype(v.end())
+    auto end() const
     {
         return v.end();
     }
@@ -725,6 +786,66 @@ struct complex
     template<typename U>
     complex(U v1) : real(v1), imaginary(0) {}
     complex(unit_i_t) : real(0), imaginary(1){}
+
+    friend inline
+    complex<T> operator+(const complex<T>& c1, const complex<T>& c2)
+    {
+        return complex<T>(c1.real + c2.real, c1.imaginary + c2.imaginary);
+    }
+
+    template<typename U>
+    friend inline
+    complex<T> operator+(const complex<T>& c1, const U& c2)
+    {
+        return c1 + complex<T>(c2, 0.f);
+    }
+
+    template< typename U>
+    friend inline
+    complex<T> operator+(const U& c1, const complex<T>& c2)
+    {
+        return complex<T>(c1, 0.f) + c2;
+    }
+
+    friend inline
+    complex<T> operator-(const complex<T>& c1, const complex<T>& c2)
+    {
+        return complex<T>(c1.real - c2.real, c1.imaginary - c2.imaginary);
+    }
+
+    friend inline
+    complex<T> operator-(const complex<T>& c1)
+    {
+        return complex<T>(-c1.real, -c1.imaginary);
+    }
+
+    friend inline
+    complex<T> operator*(const complex<T>& c1, const complex<T>& c2)
+    {
+        return complex<T>(c1.real * c2.real - c1.imaginary * c2.imaginary, c1.imaginary * c2.real + c1.real * c2.imaginary);
+    }
+
+    template<typename U>
+    friend inline
+    complex<T> operator*(const complex<T>& c1, const U& c2)
+    {
+        return c1 * complex<T>(c2, 0.f);
+    }
+
+    template<typename U>
+    friend inline
+    complex<T> operator*(const U& c1, const complex<T>& c2)
+    {
+        return complex<T>(c1, 0.f) * c2;
+    }
+
+    friend inline
+    complex<T> operator/(const complex<T>& c1, const complex<T>& c2)
+    {
+        T divisor = c2.real * c2.real + c2.imaginary * c2.imaginary;
+
+        return complex<T>((c1.real * c2.real + c1.imaginary * c2.imaginary) / divisor, (c1.imaginary * c2.real - c1.real * c2.imaginary) / divisor);
+    }
 };
 
 template<typename T>
@@ -736,71 +857,6 @@ complex<T> csqrt(const T& d1)
     T positive_sqrt = sqrt(fabs(d1));
 
     return complex<T>(select(positive_sqrt, 0, is_negative), select(0, positive_sqrt, is_negative));
-}
-
-template<typename T>
-inline
-complex<T> operator+(const complex<T>& c1, const complex<T>& c2)
-{
-    return complex<T>(c1.real + c2.real, c1.imaginary + c2.imaginary);
-}
-
-template<typename T, typename U>
-inline
-complex<T> operator+(const complex<T>& c1, const U& c2)
-{
-    return c1 + complex<T>(c2, 0.f);
-}
-
-template<typename T, typename U>
-inline
-complex<T> operator+(const U& c1, const complex<T>& c2)
-{
-    return complex<T>(c1, 0.f) + c2;
-}
-
-template<typename T>
-inline
-complex<T> operator-(const complex<T>& c1, const complex<T>& c2)
-{
-    return complex<T>(c1.real - c2.real, c1.imaginary - c2.imaginary);
-}
-
-template<typename T>
-inline
-complex<T> operator-(const complex<T>& c1)
-{
-    return complex<T>(-c1.real, -c1.imaginary);
-}
-
-template<typename T>
-inline
-complex<T> operator*(const complex<T>& c1, const complex<T>& c2)
-{
-    return complex<T>(c1.real * c2.real - c1.imaginary * c2.imaginary, c1.imaginary * c2.real + c1.real * c2.imaginary);
-}
-
-template<typename T, typename U>
-inline
-complex<T> operator*(const complex<T>& c1, const U& c2)
-{
-    return c1 * complex<T>(c2, 0.f);
-}
-
-template<typename T, typename U>
-inline
-complex<T> operator*(const U& c1, const complex<T>& c2)
-{
-    return complex<T>(c1, 0.f) * c2;
-}
-
-template<typename T>
-inline
-complex<T> operator/(const complex<T>& c1, const complex<T>& c2)
-{
-    T divisor = c2.real * c2.real + c2.imaginary * c2.imaginary;
-
-    return complex<T>((c1.real * c2.real + c1.imaginary * c2.imaginary) / divisor, (c1.imaginary * c2.real - c1.real * c2.imaginary) / divisor);
 }
 
 template<typename T>
@@ -1082,58 +1138,6 @@ bool operator<(const vec<N, T>& v1, const vec<N, T>& v2)
 
     return false;
 }*/
-
-template<int N, typename T>
-inline
-bool operator<(const vec<N, T>& v1, const vec<N, T>& v2)
-{
-    static_assert(N > 0);
-
-    for(int i=0; i<N-1; i++)
-    {
-        if(v1.v[i] != v2.v[i])
-            return v1.v[i] < v2.v[i];
-
-    }
-
-    return v1.v[N-1] < v2.v[N-1];
-}
-
-
-template<int N, typename T>
-inline
-bool operator==(const vec<N, T>& v1, const vec<N, T>& v2)
-{
-    return v1.v == v2.v;
-}
-
-template<int N, typename T>
-inline
-bool operator<=(const vec<N, T>& v1, const vec<N, T>& v2)
-{
-    return (v1 < v2) || (v1 == v2);
-}
-
-template<int N, typename T>
-inline
-bool operator>(const vec<N, T>& v1, const vec<N, T>& v2)
-{
-    return !(v1 <= v2);
-}
-
-template<int N, typename T>
-inline
-bool operator>=(const vec<N, T>& v1, const vec<N, T>& v2)
-{
-    return v1 > v2 || v1 == v2;
-}
-
-template<int N, typename T>
-inline
-bool operator!=(const vec<N, T>& v1, const vec<N, T>& v2)
-{
-    return !(v1 == v2);
-}
 
 #define V3to4(x) {x.v[0], x.v[1], x.v[2], x.v[3]}
 
@@ -1633,48 +1637,12 @@ bool angle_lies_between_vectors_cos(const vec<N, T>& v1, const vec<N, T>& v2_nor
     return dot(v1, v2_normalised) >= cos_angle;
 }
 
-template<int N, typename T>
-constexpr inline vec<N, T> operator-(const vec<N, T>& v1)
-{
-    vec<N, T> ret;
-
-    for(int i=0; i<N; i++)
-    {
-        ret.v[i] = -v1.v[i];
-    }
-
-    return ret;
-}
-
-template<int N, typename T, typename U>
-constexpr inline vec<N, U> operator*(const T& v, const vec<N, U>& v1)
-{
-    return v1 * v;
-}
-
-template<int N, typename T>
-constexpr inline vec<N, T> operator+(const T& v, const vec<N, T>& v1)
-{
-    return v1 + v;
-}
-
 /*inline vec3f operator-(float v, const vec3f& v1)
 {
     return v1 - v;
 }*/
 
 ///should convert these functions to be N/T
-
-template<int N, typename T>
-constexpr inline vec<N, T> operator/(const T& v, const vec<N, T>& v1)
-{
-    vec<N, T> top;
-
-    for(int i=0; i<N; i++)
-        top.v[i] = v;
-
-    return top / v1;
-}
 
 inline float r2d(float v)
 {
