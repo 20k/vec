@@ -691,7 +691,7 @@ struct vec
         return rot;
     }*/
 
-    operator T() const
+    explicit operator T() const
     {
         static_assert(N == 1, "Implicit T can conversion only be used on vec<1,T> types");
 
