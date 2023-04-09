@@ -691,9 +691,9 @@ struct vec
         return rot;
     }*/
 
-    operator float() const
+    operator T() const
     {
-        static_assert(N == 1, "Implicit float can conversion only be used on vec<1,T> types");
+        static_assert(N == 1, "Implicit T can conversion only be used on vec<1,T> types");
 
         return v[0];
     }
