@@ -26,48 +26,18 @@ struct vec
 
     static constexpr int DIM = N;
 
-    template<std::size_t... Is, typename... U>
-    constexpr void _init(std::index_sequence<Is...>, const U&... t)
+    vec<N, T>& operator=(const T& val)
     {
-        ((std::get<Is>(v) = t), ...);
-    }
+        static_assert(N == 1);
 
-    template<typename... U>
-    constexpr void _init_wrapper(const U&... args)
-    {
-        static_assert(sizeof...(U) == N, "Cannot initialise a vector from a different size");
-
-        std::index_sequence_for<U...> iseq;
-
-        _init(iseq, args...);
-    }
-
-    template<int K, typename U>
-    constexpr void _init_wrapper(const vec<K, U>& other)
-    {
-        static_assert(N == K, "Cannot initialise a vector from a different size");
-
-        v = other.v;
-    }
-
-    ///use a fold expression to init
-    template<typename... U>
-    constexpr vec(const U&... args) : v{}
-    {
-        _init_wrapper(args...);
-    }
-
-    /*constexpr vec(T&& t)
-    {
-        v[0] = t;
-
-        for(int i=1; i < N; i++)
+        for(int i=0; i<N; i++)
         {
-            v[i] = T();
+            v[i] = val;
         }
-    }*/
 
-    constexpr vec<N, T>& operator=(const vec<N, T>& in) = default;
+        return *this;
+    }
+
 
     T& operator[](size_t idx)
     {
@@ -175,30 +145,6 @@ struct vec
     vec<3, T> yzw() const requires(N >= 4)
     {
         return {v[1], v[2], v[3]};
-    }
-
-    ///lets modernise the code a little
-    constexpr vec() : v{}
-    {
-
-    }
-
-    constexpr vec(T val)
-    {
-        for(int i=0; i<N; i++)
-        {
-            v[i] = val;
-        }
-    }
-
-    vec<N, T>& operator=(const T& val)
-    {
-        for(int i=0; i<N; i++)
-        {
-            v[i] = val;
-        }
-
-        return *this;
     }
 
     constexpr vec<N, T> operator+(const vec<N, T>& other) const
@@ -2263,7 +2209,7 @@ inline std::vector<vec3f> sort_anticlockwise(const T& in, const vec3f& about, st
 
     vec3f euler = about.get_euler();
 
-    vec3f centre_point = about.back_rot(0.f, euler);
+    vec3f centre_point = about.back_rot((vec3f){0,0,0}, euler);
 
     vec2f centre_2d = vec2f{centre_point.v[0], centre_point.v[2]};
 
@@ -2271,7 +2217,7 @@ inline std::vector<vec3f> sort_anticlockwise(const T& in, const vec3f& about, st
     {
         vec3f vec_pos = in[i];
 
-        vec3f rotated = vec_pos.back_rot(0.f, euler);
+        vec3f rotated = vec_pos.back_rot((vec3f){0,0,0}, euler);
 
         vec2f rot_2d = vec2f{rotated.v[0], rotated.v[2]};
 
