@@ -22,7 +22,7 @@
 template<int N, typename T>
 struct vec
 {
-    std::array<T, N> v;
+    std::array<T, N> v = {};
 
     static constexpr int DIM = N;
 
