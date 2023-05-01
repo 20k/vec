@@ -850,7 +850,7 @@ tensor<T, N...> round(const tensor<T, N...>& v)
 
 template<typename T, int N, typename U>
 inline
-tensor<T, N> sum_symmetric(const tensor<T, N>& mT, const U& met, int index)
+tensor<T, N> sum_symmetric(const tensor<T, N>& mT, const U& met, int index = 0)
 {
     assert(index == 0);
 
