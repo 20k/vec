@@ -2427,14 +2427,6 @@ vec<N, T> clamp_angle(const vec<N, T>& in_vector, const vec<N, T>& direction, fl
     return evector;
 }
 
-
-///don't want to have to include all of algorithm for just this function
-template<class T>
-const T& max(const T& a, const T& b)
-{
-    return (a < b) ? b : a;
-}
-
 template<int N, typename T>
 struct mat
 {
@@ -3032,10 +3024,10 @@ struct quaternion_base
         T m11 = m.v[1][1];
         T m22 = m.v[2][2];
 
-        l.v[3] = sqrt( max( 0.f, 1 + m00 + m11 + m22 ) ) / 2;
-        l.v[0] = sqrt( max( 0.f, 1 + m00 - m11 - m22 ) ) / 2;
-        l.v[1] = sqrt( max( 0.f, 1 - m00 + m11 - m22 ) ) / 2;
-        l.v[2] = sqrt( max( 0.f, 1 - m00 - m11 + m22 ) ) / 2;
+        l.v[3] = sqrt( std::max( 0.f, 1 + m00 + m11 + m22 ) ) / 2;
+        l.v[0] = sqrt( std::max( 0.f, 1 + m00 - m11 - m22 ) ) / 2;
+        l.v[1] = sqrt( std::max( 0.f, 1 - m00 + m11 - m22 ) ) / 2;
+        l.v[2] = sqrt( std::max( 0.f, 1 - m00 - m11 + m22 ) ) / 2;
 
         T m21 = m.v[2][1];
         T m12 = m.v[1][2];
