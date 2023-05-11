@@ -189,6 +189,34 @@ struct tensor_base
         return ret;
     }
 
+    auto begin()
+    {
+        static_assert(sizeof...(N) == 1);
+
+        return data.begin();
+    }
+
+    auto end()
+    {
+        static_assert(sizeof...(N) == 1);
+
+        return data.end();
+    }
+
+    auto begin() const
+    {
+        static_assert(sizeof...(N) == 1);
+
+        return data.begin();
+    }
+
+    auto end() const
+    {
+        static_assert(sizeof...(N) == 1);
+
+        return data.end();
+    }
+
     template<typename... V>
     T& idx(V... vals)
     {
