@@ -2,6 +2,7 @@
 #define TENSOR_HPP_INCLUDED
 
 #include "vec.hpp"
+#include <cmath>
 
 template<int... N>
 constexpr int N_to_size()
@@ -164,6 +165,19 @@ template<template<typename T, int... N> typename Concrete, typename U, typename 
 inline
 auto tensor_for_each_unary(const Concrete<T, N...>& v, U&& u);
 
+///https://pharr.org/matt/blog/2019/11/03/difference-of-floats
+///a * b - c * d
+template<typename T>
+inline
+T difference_of_products(const T& a, const T& b, const T& c, const T& d)
+{
+    auto cd = c * d;
+    auto err = fma(-c, d, cd);
+    auto dop = fma(a, b, -cd);
+
+    return dop + err;
+}
+
 template<template<typename T, int... N> typename Concrete, typename T, int... N>
 struct tensor_base
 {
@@ -233,6 +247,18 @@ struct tensor_base
         return index_md_array(data, vals...);
     }
 
+    template<typename... V>
+    T& operator[](V... vals)
+    {
+        return idx(vals...);
+    }
+
+    template<typename... V>
+    const T& operator[](V... vals) const
+    {
+        return idx(vals...);
+    }
+
     T symmetric_det3() const
     {
         assert(sizeof...(N) == 2);
@@ -254,7 +280,7 @@ struct tensor_base
         a31 = a13;
         a32 = a23;
 
-        return a11*a22*a33 + a21*a32*a13 + a31*a12*a23 - a11*a32*a23 - a31*a22*a13 - a21*a12*a33;
+        return a11 * difference_of_products(a22, a33, a32, a23) + a12 * difference_of_products(a23, a31, a21, a33) + a13 * difference_of_products(a21, a32, a22, a31);
     }
 
     Concrete<T, N...> symmetric_unit_invert() const
@@ -262,45 +288,17 @@ struct tensor_base
         assert(sizeof...(N) == 2);
         assert(((N == 3) && ...));
 
-        T a11 = idx(0, 0);
-        T a12 = idx(0, 1);
-        T a13 = idx(0, 2);
-
-        T a21 = idx(1, 0);
-        T a22 = idx(1, 1);
-        T a23 = idx(1, 2);
-
-        T a31 = idx(2, 0);
-        T a32 = idx(2, 1);
-        T a33 = idx(2, 2);
-
-        a21 = a12;
-        a31 = a13;
-        a32 = a23;
-
-        T x0 = (a22 * a33 - a23 * a32);
-        T y0 = (a13 * a32 - a12 * a33);
-        T z0 = (a12 * a23 - a13 * a22);
-
-        T x1 = (a23 * a31 - a21 * a33);
-        T y1 = (a11 * a33 - a13 * a31);
-        T z1 = (a13 * a21 - a11 * a23);
-
-        T x2 = (a21 * a32 - a22 * a31);
-        T y2 = (a12 * a31 - a11 * a32);
-        T z2 = (a11 * a22 - a12 * a21);
-
         Concrete<T, N...> ret;
 
-        ret.idx(0, 0) = x0;
-        ret.idx(0, 1) = y0;
-        ret.idx(0, 2) = z0;
-        ret.idx(1, 0) = x1;
-        ret.idx(1, 1) = y1;
-        ret.idx(1, 2) = z1;
-        ret.idx(2, 0) = x2;
-        ret.idx(2, 1) = y2;
-        ret.idx(2, 2) = z2;
+        ret[0, 0] = difference_of_products(idx(1, 1), idx(2, 2), idx(2, 1), idx(1, 2));
+        ret[0, 1] = difference_of_products(idx(0, 2), idx(2, 1), idx(0, 1), idx(2, 2));
+        ret[0, 2] = difference_of_products(idx(0, 1), idx(1, 2), idx(0, 2), idx(1, 1));
+        ret[1, 0] = difference_of_products(idx(1, 2), idx(2, 0), idx(1, 0), idx(2, 2));
+        ret[1, 1] = difference_of_products(idx(0, 0), idx(2, 2), idx(0, 2), idx(2, 0));
+        ret[1, 2] = difference_of_products(idx(1, 0), idx(0, 2), idx(0, 0), idx(1, 2));
+        ret[2, 0] = difference_of_products(idx(1, 0), idx(2, 1), idx(2, 0), idx(1, 1));
+        ret[2, 1] = difference_of_products(idx(2, 0), idx(0, 1), idx(0, 0), idx(2, 1));
+        ret[2, 2] = difference_of_products(idx(0, 0), idx(1, 1), idx(1, 0), idx(0, 1));
 
         ret.idx(1, 0) = ret.idx(0, 1);
         ret.idx(2, 0) = ret.idx(0, 2);
@@ -521,20 +519,6 @@ struct tensor_base
         static_assert(((N >= 4) && ...));
 
         return idx(3);
-    }
-
-    T& operator[](size_t index)
-    {
-        static_assert(sizeof...(N) == 1);
-
-        return idx(index);
-    }
-
-    const T& operator[](size_t index) const
-    {
-        static_assert(sizeof...(N) == 1);
-
-        return idx(index);
     }
 
     T squared_length() const
