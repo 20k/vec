@@ -157,9 +157,9 @@ struct tensor_base;
 template<typename T, int... N>
 struct tensor;
 
-template<template<typename T, int... N> typename Concrete, typename U, typename T, int... N>
+template<typename T, typename U>
 inline
-Concrete<T, N...> tensor_for_each_binary(const Concrete<T, N...>& v1, const Concrete<T, N...>& v2, U&& u);
+auto tensor_for_each_binary(T&& v1, T&& v2, U&& u);
 
 template<template<typename T, int... N> typename Concrete, typename U, typename T, int... N>
 inline
@@ -611,6 +611,12 @@ struct tensor_base
     {
         return tensor_for_each_unary(t1, [](const T& v1){return -v1;});
     }
+
+    template<typename U>
+    explicit operator tensor<U, N...>()
+    {
+        return tensor_for_each_unary(*this, [&](const T& convert){return (U)convert;});
+    }
 };
 
 template<typename T, int... N>
@@ -671,6 +677,73 @@ T sum(const tensor<T, N>& t1)
     return ret;
 }
 
+template<typename T, int... N>
+inline
+T floor(const tensor<T, N...>& t1)
+{
+    return tensor_for_each_unary(t1, [](const T& in){return floor(in);});
+}
+
+template<typename T, int... N>
+inline
+T clamp(const tensor<T, N...>& t1, const tensor<T, N...>& t2, const tensor<T, N...>& t3)
+{
+    return tensor_for_each_nary([](const T& v1, const T& v2, const T& v3){return clamp(v1, v2, v3);}, t1, t2, t3);
+}
+
+template<template<typename T, int... N> typename Concrete, typename U, typename T, typename... args, int... N>
+inline
+auto tensor_for_each_nary(U&& u, const Concrete<T, N...>& v1, args&&... ten)
+{
+    Concrete<T, N...> ret;
+
+    if constexpr(sizeof...(N) == 1)
+    {
+        int len = get_first_of<N...>();
+
+        for(int i=0; i < len; i++)
+        {
+            ret.idx(i) = u(v1.idx(i), ten.idx(i)...);
+        }
+    }
+    else if constexpr(sizeof...(N) == 2)
+    {
+        int l1 = get_first_of<N...>();
+        int l2 = get_second_of<N...>();
+
+        for(int i=0; i < l1; i++)
+        {
+            for(int j=0; j < l2; j++)
+            {
+                ret.idx(i, j) = u(v1.idx(i, j), ten.idx(i, j)...);
+            }
+        }
+    }
+    else if constexpr(sizeof...(N) == 3)
+    {
+        int l1 = get_first_of<N...>();
+        int l2 = get_second_of<N...>();
+        int l3 = get_third_of<N...>();
+
+        for(int i=0; i < l1; i++)
+        {
+            for(int j=0; j < l2; j++)
+            {
+                for(int k=0; k < l3; k++)
+                {
+                    ret.idx(i, j, k) = u(v1.idx(i, j, k), ten.idx(i, j, k)...);
+                }
+            }
+        }
+    }
+    else
+    {
+        assert(false);
+    }
+
+    return ret;
+}
+
 template<template<typename T, int... N> typename Concrete, typename U, typename T, int... N>
 inline
 auto tensor_for_each_unary(const Concrete<T, N...>& v, U&& u)
@@ -726,57 +799,11 @@ auto tensor_for_each_unary(const Concrete<T, N...>& v, U&& u)
     return ret;
 }
 
-template<template<typename T, int... N> typename Concrete, typename U, typename T, int... N>
+template<typename T, typename U>
 inline
-Concrete<T, N...> tensor_for_each_binary(const Concrete<T, N...>& v1, const Concrete<T, N...>& v2, U&& u)
+auto tensor_for_each_binary(T&& v1, T&& v2, U&& u)
 {
-    Concrete<T, N...> ret;
-
-    if constexpr(sizeof...(N) == 1)
-    {
-        int len = get_first_of<N...>();
-
-        for(int i=0; i < len; i++)
-        {
-            ret.idx(i) = u(v1.idx(i), v2.idx(i));
-        }
-    }
-    else if constexpr(sizeof...(N) == 2)
-    {
-        int l1 = get_first_of<N...>();
-        int l2 = get_second_of<N...>();
-
-        for(int i=0; i < l1; i++)
-        {
-            for(int j=0; j < l2; j++)
-            {
-                ret.idx(i, j) = u(v1.idx(i, j), v2.idx(i, j));
-            }
-        }
-    }
-    else if constexpr(sizeof...(N) == 3)
-    {
-        int l1 = get_first_of<N...>();
-        int l2 = get_second_of<N...>();
-        int l3 = get_third_of<N...>();
-
-        for(int i=0; i < l1; i++)
-        {
-            for(int j=0; j < l2; j++)
-            {
-                for(int k=0; k < l3; k++)
-                {
-                    ret.idx(i, j, k) = u(v1.idx(i, j, k), v2.idx(i, j, k));
-                }
-            }
-        }
-    }
-    else
-    {
-        assert(false);
-    }
-
-    return ret;
+    return tensor_for_each_nary(std::forward<U>(u), std::forward<T>(v1), std::forward<T>(v2));
 }
 
 template<int... Indices>
