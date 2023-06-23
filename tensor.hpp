@@ -611,12 +611,6 @@ struct tensor_base
     {
         return tensor_for_each_unary(t1, [](const T& v1){return -v1;});
     }
-
-    template<typename U>
-    explicit operator tensor<U, N...>()
-    {
-        return tensor_for_each_unary(*this, [&](const T& convert){return (U)convert;});
-    }
 };
 
 template<typename T, int... N>
@@ -626,6 +620,12 @@ struct tensor : tensor_base<tensor, T, N...>
     tensor<U, N...> as() const
     {
         return tensor_for_each_unary(*this, [](const T& v1){return U{v1};});
+    }
+
+    template<typename U>
+    explicit operator tensor<U, N...>()
+    {
+        return tensor_for_each_unary(*this, [&](const T& convert){return (U)convert;});
     }
 };
 
