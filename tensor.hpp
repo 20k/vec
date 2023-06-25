@@ -6,8 +6,6 @@
 
 namespace tensor_impl
 {
-
-
     template<int... N>
     constexpr int N_to_size()
     {
@@ -464,7 +462,7 @@ namespace tensor_impl
         T x() const
         {
             static_assert(sizeof...(N) == 1);
-            static_assert(((N >= 3) && ...));
+            static_assert(((N >= 1) && ...));
 
             return idx(0);
         }
@@ -472,7 +470,7 @@ namespace tensor_impl
         T y() const
         {
             static_assert(sizeof...(N) == 1);
-            static_assert(((N >= 3) && ...));
+            static_assert(((N >= 2) && ...));
 
             return idx(1);
         }
@@ -496,7 +494,7 @@ namespace tensor_impl
         T& x()
         {
             static_assert(sizeof...(N) == 1);
-            static_assert(((N >= 3) && ...));
+            static_assert(((N >= 1) && ...));
 
             return idx(0);
         }
@@ -504,7 +502,7 @@ namespace tensor_impl
         T& y()
         {
             static_assert(sizeof...(N) == 1);
-            static_assert(((N >= 3) && ...));
+            static_assert(((N >= 2) && ...));
 
             return idx(1);
         }
@@ -523,6 +521,14 @@ namespace tensor_impl
             static_assert(((N >= 4) && ...));
 
             return idx(3);
+        }
+
+        tensor<T, 3> xyz() const
+        {
+            static_assert(sizeof...(N) == 1);
+            static_assert(((N >= 4) && ...));
+
+            return {idx(0), idx(1), idx(2)};
         }
 
         T squared_length() const
@@ -630,6 +636,11 @@ namespace tensor_impl
         explicit operator tensor<U, N...>()
         {
             return tensor_for_each_unary(*this, [&](const T& convert){return (U)convert;});
+        }
+
+        tensor<T, N...> norm() const
+        {
+            return *this / tensor_base<tensor, T, N...>::length();
         }
     };
 
@@ -1002,6 +1013,30 @@ namespace tensor_impl
     tensor<T, N...> lower_index(const tensor<T, N...>& mT, const metric<T, U, U>& met, int index)
     {
         return sum_symmetric(mT, met, index);
+    }
+
+    template<typename T>
+    inline
+    tensor<T, 3> rot_quat(const tensor<T, 3>& point, tensor<T, 4> q)
+    {
+        q = q.norm();
+
+        tensor<T, 3> t = 2.f * cross(q.xyz(), point);
+
+        return point + q.w() * t + cross(q.xyz(), t);
+    }
+
+    template<typename T>
+    inline
+    tensor<T, 3> cross(const tensor<T, 3>& v1, const tensor<T, 3>& v2)
+    {
+        tensor<T, 3> ret;
+
+        ret[0] = v1[1] * v2[2] - v1[2] * v2[1];
+        ret[1] = v1[2] * v2[0] - v1[0] * v2[2];
+        ret[2] = v1[0] * v2[1] - v1[1] * v2[0];
+
+        return ret;
     }
 
     /*template<typename T>
