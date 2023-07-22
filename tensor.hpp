@@ -51,6 +51,8 @@ namespace tensor_impl
     constexpr
     auto& index_md_array(T& arr, Next v)
     {
+        assert(v < (Next)arr.size());
+
         return arr[v];
     }
 
@@ -58,6 +60,8 @@ namespace tensor_impl
     constexpr
     auto& index_md_array(T& arr, Next v, Rest... r)
     {
+        assert(v < (Next)arr.size());
+
         return index_md_array(arr[v], r...);
     }
 
