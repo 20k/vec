@@ -163,9 +163,9 @@ namespace tensor_impl
     template<typename T, int... N>
     struct tensor;
 
-    template<typename T, typename U>
+    template<typename V1, typename V2, typename Func>
     inline
-    auto tensor_for_each_binary(T&& v1, T&& v2, U&& u);
+    auto tensor_for_each_binary(V1&& v1, V2&& v2, Func&& u);
 
     template<template<typename T, int... N> typename Concrete, typename U, typename T, int... N>
     inline
@@ -184,6 +184,25 @@ namespace tensor_impl
         return dop + err;
     }
 
+    ///this could be made more generic, but not going to pretend its not just for the value library currently
+    template<typename T, typename U>
+    struct mutable_proxy
+    {
+        const T& ten;
+        U& data;
+
+        mutable_proxy(const T& _ten, U& _data) : ten(_ten), data(_data){}
+
+        template<typename V>
+        void operator=(const V& other)
+        {
+            tensor_for_each_binary(ten, other, [&](const auto& v1, const auto& v2)
+            {
+                v1.as_mutable(data) = v2;
+            });
+        }
+    };
+
     template<template<typename T, int... N> typename Concrete, typename T, int... N>
     struct tensor_base
     {
@@ -191,13 +210,37 @@ namespace tensor_impl
         using concrete_t = Concrete<U, M...>;
 
         template<typename U>
-        using value_t = T;
+        using concrete_with_length_t = Concrete<U, N...>;
+
+        using value_type = T;
+
+        static inline constexpr int dimensions = sizeof...(N);
 
         md_array<T, N...> data{};
 
         Concrete<T, N...> to_concrete() const
         {
             return *this;
+        }
+
+        /*constexpr int dimensions() const
+        {
+            return sizeof...(N);
+        }*/
+
+        constexpr int get_first_of() const
+        {
+            return tensor_impl::get_first_of<N...>();
+        }
+
+        constexpr int get_second_of() const
+        {
+            return tensor_impl::get_second_of<N...>();
+        }
+
+        constexpr int get_third_of() const
+        {
+            return tensor_impl::get_third_of<N...>();
         }
 
         tensor<T, N...> to_tensor() const
@@ -235,6 +278,12 @@ namespace tensor_impl
             static_assert(sizeof...(N) == 1);
 
             return data.end();
+        }
+
+        template<typename Mut>
+        auto as_mutable(Mut& m) const
+        {
+            return mutable_proxy(*this, m);
         }
 
         template<typename... V>
@@ -541,7 +590,7 @@ namespace tensor_impl
 
             T ret = 0;
 
-            for(size_t i = 0; i < get_first_of<N...>(); i++)
+            for(int i = 0; i < get_first_of(); i++)
             {
                 ret += idx(i) * idx(i);
             }
@@ -630,6 +679,8 @@ namespace tensor_impl
     template<typename T, int... N>
     struct tensor : tensor_base<tensor, T, N...>
     {
+        using tensor_base<tensor, T, N...>::dimensions;
+
         template<typename U>
         tensor<U, N...> as() const
         {
@@ -714,119 +765,132 @@ namespace tensor_impl
         return tensor_for_each_nary([](const T& v1, const T& v2, const T& v3){return clamp(v1, v2, v3);}, t1, t2, t3);
     }
 
-    template<template<typename T, int... N> typename Concrete, typename U, typename T, typename... args, int... N>
+    template<typename Raw, typename U, typename... args>
     inline
-    auto tensor_for_each_nary(U&& u, const Concrete<T, N...>& v1, args&&... ten)
+    auto tensor_for_each_nary(U&& u, Raw&& v1, args&&... ten)
     {
-        Concrete<T, N...> ret;
+        using T = std::remove_cvref_t<Raw>;
+        using real_type = decltype(u(std::declval<typename T::value_type>(), std::declval<typename std::remove_cvref_t<args>::value_type>()...));
 
-        if constexpr(sizeof...(N) == 1)
+        if constexpr(std::is_same_v<real_type, void>)
         {
-            int len = get_first_of<N...>();
-
-            for(int i=0; i < len; i++)
+            if constexpr(T::dimensions == 1)
             {
-                ret.idx(i) = u(v1.idx(i), ten.idx(i)...);
-            }
-        }
-        else if constexpr(sizeof...(N) == 2)
-        {
-            int l1 = get_first_of<N...>();
-            int l2 = get_second_of<N...>();
+                int len = v1.get_first_of();
 
-            for(int i=0; i < l1; i++)
-            {
-                for(int j=0; j < l2; j++)
+                for(int i=0; i < len; i++)
                 {
-                    ret.idx(i, j) = u(v1.idx(i, j), ten.idx(i, j)...);
+                    u(v1.idx(i), ten.idx(i)...);
                 }
             }
-        }
-        else if constexpr(sizeof...(N) == 3)
-        {
-            int l1 = get_first_of<N...>();
-            int l2 = get_second_of<N...>();
-            int l3 = get_third_of<N...>();
-
-            for(int i=0; i < l1; i++)
+            else if constexpr(T::dimensions == 2)
             {
-                for(int j=0; j < l2; j++)
+                int l1 = v1.get_first_of();
+                int l2 = v1.get_second_of();
+
+                for(int i=0; i < l1; i++)
                 {
-                    for(int k=0; k < l3; k++)
+                    for(int j=0; j < l2; j++)
                     {
-                        ret.idx(i, j, k) = u(v1.idx(i, j, k), ten.idx(i, j, k)...);
+                        u(v1.idx(i, j), ten.idx(i, j)...);
                     }
                 }
+            }
+            else if constexpr(T::dimensions == 3)
+            {
+                int l1 = v1.get_first_of();
+                int l2 = v1.get_second_of();
+                int l3 = v1.get_third_of();
+
+                for(int i=0; i < l1; i++)
+                {
+                    for(int j=0; j < l2; j++)
+                    {
+                        for(int k=0; k < l3; k++)
+                        {
+                            u(v1.idx(i, j, k), ten.idx(i, j, k)...);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                static_assert(false);
             }
         }
         else
         {
-            assert(false);
-        }
+            if constexpr(T::dimensions == 1)
+            {
+                int len = v1.get_first_of();
 
-        return ret;
+                typename T::template concrete_with_length_t<real_type> ret;
+
+                for(int i=0; i < len; i++)
+                {
+                    ret.idx(i) = u(v1.idx(i), ten.idx(i)...);
+                }
+
+                return ret;
+            }
+            else if constexpr(T::dimensions == 2)
+            {
+                int l1 = v1.get_first_of();
+                int l2 = v1.get_second_of();
+
+                typename T::template concrete_with_length_t<real_type> ret;
+
+                for(int i=0; i < l1; i++)
+                {
+                    for(int j=0; j < l2; j++)
+                    {
+                        ret.idx(i, j) = u(v1.idx(i, j), ten.idx(i, j)...);
+                    }
+                }
+
+                return ret;
+            }
+            else if constexpr(T::dimensions == 3)
+            {
+                int l1 = v1.get_first_of();
+                int l2 = v1.get_second_of();
+                int l3 = v1.get_third_of();
+
+                typename T::template concrete_with_length_t<real_type> ret;
+
+                for(int i=0; i < l1; i++)
+                {
+                    for(int j=0; j < l2; j++)
+                    {
+                        for(int k=0; k < l3; k++)
+                        {
+                            ret.idx(i, j, k) = u(v1.idx(i, j, k), ten.idx(i, j, k)...);
+                        }
+                    }
+                }
+
+                return ret;
+            }
+            else
+            {
+                ///fixed in c++something
+                static_assert(false);
+            }
+        }
     }
 
     template<template<typename T, int... N> typename Concrete, typename U, typename T, int... N>
     inline
     auto tensor_for_each_unary(const Concrete<T, N...>& v, U&& u)
     {
-        using result_t = decltype(u(std::declval<T>()));
-
-        Concrete<result_t, N...> ret;
-
-        if constexpr(sizeof...(N) == 1)
-        {
-            int len = get_first_of<N...>();
-
-            for(int i=0; i < len; i++)
-            {
-                ret.idx(i) = u(v.idx(i));
-            }
-        }
-        else if constexpr(sizeof...(N) == 2)
-        {
-            int l1 = get_first_of<N...>();
-            int l2 = get_second_of<N...>();
-
-            for(int i=0; i < l1; i++)
-            {
-                for(int j=0; j < l2; j++)
-                {
-                    ret.idx(i, j) = u(v.idx(i, j));
-                }
-            }
-        }
-        else if constexpr(sizeof...(N) == 3)
-        {
-            int l1 = get_first_of<N...>();
-            int l2 = get_second_of<N...>();
-            int l3 = get_third_of<N...>();
-
-            for(int i=0; i < l1; i++)
-            {
-                for(int j=0; j < l2; j++)
-                {
-                    for(int k=0; k < l3; k++)
-                    {
-                        ret.idx(i, j, k) = u(v.idx(i, j, k));
-                    }
-                }
-            }
-        }
-        else
-        {
-            assert(false);
-        }
-
-        return ret;
+        return tensor_for_each_nary(std::forward<U>(u), v);
     }
 
-    template<typename T, typename U>
+    template<typename V1, typename V2, typename Func>
     inline
-    auto tensor_for_each_binary(T&& v1, T&& v2, U&& u)
+    auto tensor_for_each_binary(V1&& v1, V2&& v2, Func&& u)
     {
-        return tensor_for_each_nary(std::forward<U>(u), std::forward<T>(v1), std::forward<T>(v2));
+        return tensor_for_each_nary(std::forward<Func>(u), std::forward<V1>(v1), std::forward<V2>(v2));
     }
 
     template<int... Indices>
