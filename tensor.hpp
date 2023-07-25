@@ -203,6 +203,7 @@ namespace tensor_impl
         }
     };
 
+    ///todo: use deducing this to make this a lot simpler
     template<template<typename T, int... N> typename Concrete, typename T, int... N>
     struct tensor_base
     {
