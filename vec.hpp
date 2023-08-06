@@ -372,10 +372,12 @@ struct vec
         return v.end();
     }
 
-    template<typename U, typename V>
-    vec<N, U> map(V func)
+    template<typename U>
+    auto map(U&& func)
     {
-        vec<N, U> ret;
+        using type = decltype(func(T()));
+
+        vec<N, type> ret;
 
         for(int i=0; i<N; i++)
         {
