@@ -244,6 +244,12 @@ namespace tensor_impl
             return tensor_impl::get_third_of<N...>();
         }
 
+        ///multiplies all the dimensions together
+        constexpr int square_size() const
+        {
+            return (N * ...);
+        }
+
         tensor<T, N...> to_tensor() const
         {
             tensor<T, N...> ret;
