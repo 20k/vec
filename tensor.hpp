@@ -822,7 +822,9 @@ namespace tensor_impl
             }
             else
             {
+                #ifndef __clang__
                 static_assert(false);
+                #endif
             }
         }
         else
@@ -880,8 +882,10 @@ namespace tensor_impl
             }
             else
             {
+                #ifndef __clang__
                 ///fixed in c++something
                 static_assert(false);
+                #endif
             }
         }
     }
