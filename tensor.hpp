@@ -744,9 +744,9 @@ namespace tensor_impl
     inline
     T sum(const tensor<T, N>& t1)
     {
-        T ret = 0;
+        T ret = t1.idx(0);
 
-        for(int i=0; i < N; i++)
+        for(int i=1; i < N; i++)
         {
             ret = ret + t1.idx(i);
         }
