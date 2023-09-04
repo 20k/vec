@@ -1104,6 +1104,24 @@ typedef vec<3, int> vec3i;
 typedef vec<2, int> vec2i;
 typedef vec<1, int> vec1i;
 
+namespace cl_adl
+{
+    ///compatibility with the OpenCL library
+    template<typename T, int N>
+    inline
+    std::array<T, N> type_to_array(const vec<N, T>& in)
+    {
+        std::array<T, N> ret;
+
+        for(int i=0; i < N; i++)
+        {
+            ret[i] = in.v[i];
+        }
+
+        return ret;
+    }
+}
+
 template<int N, typename T>
 inline
 vec<N, T> val_to_vec(float val)

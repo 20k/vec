@@ -1143,4 +1143,22 @@ using metric = tensor_impl::metric<T, N...>;
 template<typename T, int... N>
 using inverse_metric = tensor_impl::inverse_metric<T, N...>;
 
+///compatibility with the OpenCL library
+namespace cl_adl
+{
+    template<typename T, int N>
+    inline
+    std::array<T, N> type_to_array(const tensor<T, N>& in)
+    {
+        std::array<T, N> ret;
+
+        for(int i=0; i < N; i++)
+        {
+            ret[i] = in[i];
+        }
+
+        return ret;
+    }
+}
+
 #endif
