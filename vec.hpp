@@ -804,7 +804,7 @@ complex<T> csqrt(const T& d1)
 
     T positive_sqrt = sqrt(fabs(d1));
 
-    return complex<T>(select(positive_sqrt, 0, is_negative), select(0, positive_sqrt, is_negative));
+    return complex<T>(select(positive_sqrt, T{0}, is_negative), select(T{0}, positive_sqrt, is_negative));
 }
 
 template<typename T>
