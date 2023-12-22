@@ -1250,19 +1250,17 @@ vec<N, T> rand_det(U& rnd, const vec<N, T>& M, const vec<N, T>& MN)
     return ret;
 }
 
-template<typename T, typename rng>
+template<typename T>
 inline
-int random_select_with_weights(rng& my_rng, const std::vector<T>& weights)
+int random_select_with_val(const T& random, const std::vector<T>& weights)
 {
     if(weights.size() == 0)
         throw std::runtime_error("Needs 1+ probabilities");
 
-    float val = rand_det_s(my_rng, 0.f, 1.f);
-
-    std::vector<float> accum;
+    std::vector<T> accum;
     accum.reserve(weights.size());
 
-    float total_probability = 0;
+    T total_probability = 0;
 
     for(auto i : weights)
     {
@@ -1277,7 +1275,7 @@ int random_select_with_weights(rng& my_rng, const std::vector<T>& weights)
     ///we build a vector [0.2, 0.7, 0.8, 1.5]
     ///and a total probability of 1.5
 
-    if(total_probability > 0.000001f)
+    if(total_probability > T{0.000001f})
     {
         for(auto& i : accum)
         {
@@ -1298,14 +1296,21 @@ int random_select_with_weights(rng& my_rng, const std::vector<T>& weights)
 
     for(int i=0; i < (int)weights.size(); i++)
     {
-        float left_probability = (i == 0) ? 0 : accum[i-1];
-        float my_probability = accum[i];
+        T left_probability = (i == 0) ? 0 : accum[i-1];
+        T my_probability = accum[i];
 
-        if(val >= left_probability && val < my_probability)
+        if(random >= left_probability && random < my_probability)
             return i;
     }
 
     throw std::runtime_error("No probability found, implementation error");
+}
+
+template<typename T, typename rng>
+inline
+int random_select_with_weights(rng& my_rng, const std::vector<T>& weights)
+{
+    return random_select_with_val(rand_det_s(my_rng, 0.f, 1.f), weights);
 }
 
 template<int N, typename T, typename U, typename V>
