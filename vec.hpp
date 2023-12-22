@@ -720,172 +720,205 @@ struct vec
     }
 };
 
-struct unit_i_t{};
-
-template<typename T>
-struct complex
+#if 1
+///to future me:
+///std::complex<T> is unusable, because it *requires* the type to implement operator==
+namespace complex_type
 {
-    T real = T();
-    T imaginary = T();
+    struct unit_i_t{};
 
-    complex(){}
-    template<typename U, typename V>
-    complex(U v1, V v2) : real(v1), imaginary(v2) {}
-    template<typename U>
-    complex(U v1) : real(v1), imaginary(0) {}
-    complex(unit_i_t) : real(0), imaginary(1){}
-
-    friend inline
-    complex<T> operator+(const complex<T>& c1, const complex<T>& c2)
+    template<typename T>
+    struct complex
     {
-        return complex<T>(c1.real + c2.real, c1.imaginary + c2.imaginary);
+        using is_complex = std::true_type;
+        using underlying_type = T;
+
+        T real = T();
+        T imaginary = T();
+
+        complex(){}
+        complex(const std::string& v1, const std::string& v2) : real(v1), imaginary(v2) {}
+        template<typename U, typename V>
+        requires std::is_constructible_v<T, U> && std::is_constructible_v<T, V>
+        complex(U v1, V v2) : real(v1), imaginary(v2) {}
+        template<typename U>
+        requires std::is_constructible_v<T, U>
+        complex(U v1) : real(v1), imaginary(0) {}
+        complex(unit_i_t) : real(0), imaginary(1){}
+
+        friend inline
+        complex<T> operator+(const complex<T>& c1, const complex<T>& c2)
+        {
+            return complex<T>(c1.real + c2.real, c1.imaginary + c2.imaginary);
+        }
+
+        template<typename U>
+        friend inline
+        complex<T> operator+(const complex<T>& c1, const U& c2)
+        {
+            return c1 + complex<T>(c2, 0.f);
+        }
+
+        template< typename U>
+        friend inline
+        complex<T> operator+(const U& c1, const complex<T>& c2)
+        {
+            return complex<T>(c1, 0.f) + c2;
+        }
+
+        friend
+        void operator+=(complex<T>& d1, const complex<T>& d2)
+        {
+            d1 = d1 + d2;
+        }
+
+        friend inline
+        complex<T> operator-(const complex<T>& c1, const complex<T>& c2)
+        {
+            return complex<T>(c1.real - c2.real, c1.imaginary - c2.imaginary);
+        }
+
+        friend inline
+        complex<T> operator-(const complex<T>& c1)
+        {
+            return complex<T>(-c1.real, -c1.imaginary);
+        }
+
+        friend inline
+        complex<T> operator*(const complex<T>& c1, const complex<T>& c2)
+        {
+            return complex<T>(c1.real * c2.real - c1.imaginary * c2.imaginary, c1.imaginary * c2.real + c1.real * c2.imaginary);
+        }
+
+        template<typename U>
+        friend inline
+        complex<T> operator*(const complex<T>& c1, const U& c2)
+        {
+            return c1 * complex<T>(c2, 0.f);
+        }
+
+        template<typename U>
+        friend inline
+        complex<T> operator*(const U& c1, const complex<T>& c2)
+        {
+            return complex<T>(c1, 0.f) * c2;
+        }
+
+        friend inline
+        complex<T> operator/(const complex<T>& c1, const complex<T>& c2)
+        {
+            T divisor = c2.real * c2.real + c2.imaginary * c2.imaginary;
+
+            return complex<T>((c1.real * c2.real + c1.imaginary * c2.imaginary) / divisor, (c1.imaginary * c2.real - c1.real * c2.imaginary) / divisor);
+        }
+    };
+
+    template<typename T>
+    inline
+    complex<T> sin(const complex<T>& c1)
+    {
+        return complex<T>(sin(c1.real) * cosh(c1.imaginary), cos(c1.real) * sinh(c1.imaginary));
     }
 
-    template<typename U>
-    friend inline
-    complex<T> operator+(const complex<T>& c1, const U& c2)
+    template<typename T>
+    inline
+    complex<T> cos(const complex<T>& c1)
     {
-        return c1 + complex<T>(c2, 0.f);
+        return complex<T>(cos(c1.real) * cosh(c1.imaginary), -sin(c1.real) * sinh(c1.imaginary));
     }
 
-    template< typename U>
-    friend inline
-    complex<T> operator+(const U& c1, const complex<T>& c2)
+    template<typename T>
+    inline
+    complex<T> conjugate(const complex<T>& c1)
     {
-        return complex<T>(c1, 0.f) + c2;
+        return complex<T>(c1.real, -c1.imaginary);
     }
 
-    friend inline
-    complex<T> operator-(const complex<T>& c1, const complex<T>& c2)
+    template<typename T>
+    inline
+    complex<T> makefinite(const complex<T>& c1)
     {
-        return complex<T>(c1.real - c2.real, c1.imaginary - c2.imaginary);
+        return complex<T>(makefinite(c1.real), makefinite(c1.imaginary));
     }
 
-    friend inline
-    complex<T> operator-(const complex<T>& c1)
+    template<typename T>
+    inline
+    T fabs(const complex<T>& c1)
     {
-        return complex<T>(-c1.real, -c1.imaginary);
+        return sqrt(c1.real * c1.real + c1.imaginary * c1.imaginary);
     }
 
-    friend inline
-    complex<T> operator*(const complex<T>& c1, const complex<T>& c2)
+    template<typename T>
+    inline
+    T Imaginary(const complex<T>& c1)
     {
-        return complex<T>(c1.real * c2.real - c1.imaginary * c2.imaginary, c1.imaginary * c2.real + c1.real * c2.imaginary);
+        return c1.imaginary;
     }
 
-    template<typename U>
-    friend inline
-    complex<T> operator*(const complex<T>& c1, const U& c2)
+    template<typename T>
+    inline
+    T Real(const complex<T>& c1)
     {
-        return c1 * complex<T>(c2, 0.f);
+        return c1.real;
     }
 
-    template<typename U>
-    friend inline
-    complex<T> operator*(const U& c1, const complex<T>& c2)
+    template<typename T>
+    inline
+    T& Imaginary(complex<T>& c1)
     {
-        return complex<T>(c1, 0.f) * c2;
+        return c1.imaginary;
     }
 
-    friend inline
-    complex<T> operator/(const complex<T>& c1, const complex<T>& c2)
+    template<typename T>
+    inline
+    T& Real(complex<T>& c1)
     {
-        T divisor = c2.real * c2.real + c2.imaginary * c2.imaginary;
-
-        return complex<T>((c1.real * c2.real + c1.imaginary * c2.imaginary) / divisor, (c1.imaginary * c2.real - c1.real * c2.imaginary) / divisor);
+        return c1.real;
     }
-};
+
+    template<typename T>
+    inline
+    complex<T> sqrt(const complex<T>& d1)
+    {
+        T r_part = sqrt(max((d1.real + sqrt(d1.real * d1.real + d1.imaginary * d1.imaginary))/2, 0));
+        T i_part = sign(d1.imaginary) * sqrt(max((-d1.real + sqrt(d1.real * d1.real + d1.imaginary * d1.imaginary))/2, 0));
+
+        return complex<T>(r_part, i_part);
+    }
+
+    template<typename T>
+    inline
+    complex<T> pow(const complex<T>& d1, int exponent)
+    {
+        complex<T> ret = d1;
+
+        for(int i=0; i < exponent - 1; i++)
+        {
+            ret = ret * d1;
+        }
+
+        return ret;
+    }
+
+    template<typename T>
+    inline
+    complex<T> expi(const T& d1)
+    {
+        return complex<T>(cos(d1), sin(d1));
+    }
+}
 
 template<typename T>
 inline
-complex<T> csqrt(const T& d1)
+complex_type::complex<T> csqrt(const T& d1)
 {
     T is_negative = signbit(d1);
 
     T positive_sqrt = sqrt(fabs(d1));
 
-    return complex<T>(select(positive_sqrt, 0, is_negative), select(0, positive_sqrt, is_negative));
+    return complex_type::complex<T>(select(positive_sqrt, T{0}, is_negative), select(T{0}, positive_sqrt, is_negative));
 }
-
-template<typename T>
-inline
-complex<T> sin(const complex<T>& c1)
-{
-    return complex<T>(sin(c1.real) * cosh(c1.imaginary), cos(c1.real) * sinh(c1.imaginary));
-}
-
-template<typename T>
-inline
-complex<T> cos(const complex<T>& c1)
-{
-    return complex<T>(cos(c1.real) * cosh(c1.imaginary), -sin(c1.real) * sinh(c1.imaginary));
-}
-
-template<typename T>
-inline
-complex<T> conjugate(const complex<T>& c1)
-{
-    return complex<T>(c1.real, -c1.imaginary);
-}
-
-template<typename T>
-inline
-complex<T> makefinite(const complex<T>& c1)
-{
-    return complex<T>(makefinite(c1.real), makefinite(c1.imaginary));
-}
-
-template<typename T>
-inline
-T fabs(const complex<T>& c1)
-{
-    return sqrt(c1.real * c1.real + c1.imaginary * c1.imaginary);
-}
-
-template<typename T>
-inline
-T Imaginary(const complex<T>& c1)
-{
-    return c1.imaginary;
-}
-
-template<typename T>
-inline
-T Real(const complex<T>& c1)
-{
-    return c1.real;
-}
-
-template<typename T>
-inline
-complex<T> sqrt(const complex<T>& d1)
-{
-    T r_part = sqrt(max((d1.real + sqrt(d1.real * d1.real + d1.imaginary * d1.imaginary))/2, 0));
-    T i_part = sign(d1.imaginary) * sqrt(max((-d1.real + sqrt(d1.real * d1.real + d1.imaginary * d1.imaginary))/2, 0));
-
-    return complex<T>(r_part, i_part);
-}
-
-template<typename T>
-inline
-complex<T> pow(const complex<T>& d1, int exponent)
-{
-    complex<T> ret = d1;
-
-    for(int i=0; i < exponent - 1; i++)
-    {
-        ret = ret * d1;
-    }
-
-    return ret;
-}
-
-template<typename T>
-inline
-complex<T> expi(const T& d1)
-{
-    return complex<T>(cos(d1), sin(d1));
-}
+#endif
 
 template<int N, typename T>
 inline
