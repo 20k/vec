@@ -727,6 +727,12 @@ namespace complex_type
 {
     struct unit_i_t{};
 
+    inline
+    unit_i_t unit_i()
+    {
+        return unit_i_t{};
+    }
+
     template<typename T>
     struct complex
     {
