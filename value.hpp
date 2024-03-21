@@ -341,6 +341,8 @@ namespace dual_types
             ROUND,
 
             BRACKET,
+            BRACKET2,
+            BRACKET_LINEAR,
             DECLARE,
             DECLARE_ARRAY,
 
@@ -442,6 +444,8 @@ namespace dual_types
             "ceil",
             "round",
             "bad#bracket",
+            "bad#bracket2",
+            "bad#bracketlinear",
             "bad#declare",
             "bad#declarearray",
             "generated#function#failure",
@@ -514,23 +518,24 @@ namespace dual_types
 
     struct codegen
     {
-        virtual std::optional<std::string> bracket2(const value<std::monostate>& v)
+        virtual std::optional<std::string> bracket2(const value<std::monostate>& v) const
         {
-            assert(false);
+            ///the way this works then is that we pass in dim information, eg
+            ///"name", px, py, pz, dx, dy, dz
 
             return std::nullopt;
         }
 
-        virtual std::optional<std::string> bracket_linear(const value<std::monostate>& v)
+        virtual std::optional<std::string> bracket_linear(const value<std::monostate>& v) const
         {
-            assert(false);
+            ///same as bracket2, except that px etc can be fractional, and we do linear interpolation
 
             return std::nullopt;
         }
     };
 
     template<typename T>
-    std::string type_to_string(const value<T>& op, codegen cg = codegen());
+    std::string type_to_string(const value<T>& op, const codegen& cg = codegen());
 
     template<typename U, typename... T>
     value<U> make_op(ops::type_t type, T&&... args);
@@ -2049,7 +2054,7 @@ namespace dual_types
 
     template<typename Unused>
     inline
-    std::string type_to_string(const value<Unused>& op, codegen cg)
+    std::string type_to_string(const value<Unused>& op, const codegen& cg)
     {
         //make it difficult to call type_to_string without the code generator
         auto type_to_string = [&](const value<Unused>& op)
@@ -2093,6 +2098,12 @@ namespace dual_types
         {
             return "(" + type_to_string(op.args[0]) + "[" + type_to_string(op.args[1]) + "])";
         }
+
+        if(op.type == ops::BRACKET2)
+            return cg.bracket2(op.as_generic()).value();
+
+        if(op.type == ops::BRACKET_LINEAR)
+            return cg.bracket_linear(op.as_generic()).value();
 
         if(op.type == ops::RETURN)
         {
