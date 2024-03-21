@@ -512,8 +512,25 @@ namespace dual_types
         return a * b + c;
     }
 
+    struct codegen
+    {
+        virtual std::optional<std::string> bracket2(const value<std::monostate>& v)
+        {
+            assert(false);
+
+            return std::nullopt;
+        }
+
+        virtual std::optional<std::string> bracket_linear(const value<std::monostate>& v)
+        {
+            assert(false);
+
+            return std::nullopt;
+        }
+    };
+
     template<typename T>
-    std::string type_to_string(const value<T>& op);
+    std::string type_to_string(const value<T>& op, codegen cg = codegen());
 
     template<typename U, typename... T>
     value<U> make_op(ops::type_t type, T&&... args);
@@ -2032,8 +2049,14 @@ namespace dual_types
 
     template<typename Unused>
     inline
-    std::string type_to_string(const value<Unused>& op)
+    std::string type_to_string(const value<Unused>& op, codegen cg)
     {
+        //make it difficult to call type_to_string without the code generator
+        auto type_to_string = [&](const value<Unused>& op)
+        {
+            return ::dual_types::type_to_string(op, cg);
+        };
+
         //static_assert(std::is_same_v<T, std::float16_t> || std::is_same_v<T, double> || std::is_same_v<T, float> || std::is_same_v<T, int> || std::is_same_v<T, short> || std::is_same_v<T, unsigned short> || std::is_same_v<T, std::monostate>);
 
         ///the type system is becoming really not ideal, if we promote a half to a float, we have no way of detecting that. Relying on stringyness
