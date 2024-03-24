@@ -512,26 +512,15 @@ namespace dual_types
     template<typename T>
     inline
     T mad(T a, T b, T c)
+
     {
         return a * b + c;
     }
 
     struct codegen
     {
-        virtual std::optional<std::string> bracket2(const value<std::monostate>& v) const
-        {
-            ///the way this works then is that we pass in dim information, eg
-            ///"name", px, py, pz, dx, dy, dz
-
-            return std::nullopt;
-        }
-
-        virtual std::optional<std::string> bracket_linear(const value<std::monostate>& v) const
-        {
-            ///same as bracket2, except that px etc can be fractional, and we do linear interpolation
-
-            return std::nullopt;
-        }
+        inline virtual std::optional<std::string> bracket2(const value<std::monostate>& op) const;
+        inline virtual std::optional<std::string> bracket_linear(const value<std::monostate>& op) const;
     };
 
     template<typename T>
@@ -1539,7 +1528,7 @@ namespace dual_types
                 if(type == ops::ASSIGN && i == 0)
                     continue;
 
-                if(type == ops::BRACKET && i == 0)
+                if((type == ops::BRACKET || type == ops::BRACKET2 || type == ops::BRACKET_LINEAR) && i == 0)
                     continue;
 
                 in(args[i]);
@@ -1572,7 +1561,7 @@ namespace dual_types
                 if(type == ops::ASSIGN && i == 0)
                     continue;
 
-                if(type == ops::BRACKET && i == 0)
+                if((type == ops::BRACKET || type == ops::BRACKET2 || type == ops::BRACKET_LINEAR) && i == 0)
                     continue;
 
                 in(args[i]);
@@ -1877,6 +1866,57 @@ namespace dual_types
             return make_op<std::monostate>(ops::COMMA, d1.as_generic(), d2.as_generic());
         }*/
     };
+
+    std::optional<std::string> codegen::bracket2(const value<std::monostate>& op) const
+    {
+        ///the way this works then is that we pass in dim information, eg
+        ///"name", px, py, pz, dx, dy, dz
+
+        int argc = op.args.size();
+
+        assert(argc == 2 || argc == 3 || argc == 5 || argc == 7);
+
+        std::string name = type_to_string(op.args[0]);
+
+        ///"name", px, dx
+        if(argc == 2 || argc == 3)
+        {
+            return "(" + name + "[" + type_to_string(op.args[1]) + "])";;
+        }
+
+        ///2d indexing
+        ///"name", px, py, dx, dy
+        if(argc == 5)
+        {
+            auto x = op.args[1];
+            auto y = op.args[2];
+            auto width = op.args[3];
+
+            return "(" + name + "[" + type_to_string(y * width + x) + "])";
+        }
+
+        ///2d indexing
+        ///"name", px, py, pz, dx, dy, dz
+        if(argc == 7)
+        {
+            auto x = op.args[1];
+            auto y = op.args[2];
+            auto z = op.args[3];
+            auto width = op.args[4];
+            auto height = op.args[5];
+
+            return "(" + name + "[" + type_to_string(z * width * height + y * width + x) + "])";
+        }
+
+        return std::nullopt;
+    }
+
+    std::optional<std::string> codegen::bracket_linear(const value<std::monostate>& op) const
+    {
+        ///same as bracket2, except that px etc can be fractional, and we do linear interpolation
+
+        return std::nullopt;
+    }
 
     template<typename T>
     struct value_mut : value<T>
