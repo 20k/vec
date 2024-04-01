@@ -1241,7 +1241,7 @@ namespace dual_types
                 //if(final_args.size() == 2)
                 //    return *this;
 
-                return make_op<T>(ops::COMBO_PLUS, final_args);
+                return make_op_vec<T>(ops::COMBO_PLUS, final_args);
             }
 
             #ifdef COMBO_MULT
@@ -1727,11 +1727,11 @@ namespace dual_types
             assert(false);
         }
 
-        template<typename U>
+        /*template<typename U>
         value<T> bracket(const value<U>& idx)
         {
             return make_op<T>(ops::BRACKET, *this, idx.template reinterpret_as<value<T>>());
-        }
+        }*/
 
         value<T>& operator+=(const value<T>& d1)
         {
@@ -1876,12 +1876,12 @@ namespace dual_types
 
         assert(argc == 2 || argc == 3 || argc == 5 || argc == 7);
 
-        std::string name = type_to_string(op.args[0]);
+        std::string name = type_to_string(op.args[0], *this);
 
         ///"name", px, dx
         if(argc == 2 || argc == 3)
         {
-            return "(" + name + "[" + type_to_string(op.args[1]) + "])";;
+            return "(" + name + "[" + type_to_string(op.args[1], *this) + "])";;
         }
 
         ///2d indexing
@@ -1892,7 +1892,7 @@ namespace dual_types
             auto y = op.args[2];
             auto width = op.args[3];
 
-            return "(" + name + "[" + type_to_string(y * width + x) + "])";
+            return "(" + name + "[" + type_to_string(y * width + x, *this) + "])";
         }
 
         ///2d indexing
@@ -2325,13 +2325,43 @@ namespace dual_types
         }
     }
 
+    template<typename T, typename U>
+    inline
+    value<T> create_as(value<U>&& in)
+    {
+        return in.template reinterpret_as<value<T>>();
+    }
+
+    template<typename T, typename U>
+    inline
+    value<T> create_as(const value<U>& in)
+    {
+        return in.template reinterpret_as<value<T>>();
+    }
+
+    template<typename T, typename U>
+    requires (std::is_arithmetic_v<U> || std::same_as<U, std::string> || std::same_as<std::decay_t<U>, const char*>)
+    inline
+    value<T> create_as(U&& in)
+    {
+        return value<T>(in);
+    }
+
+    template<typename T, typename U>
+    requires (std::is_arithmetic_v<U> || std::same_as<U, std::string> || std::same_as<std::decay_t<U>, const char*>)
+    inline
+    value<T> create_as(const U& in)
+    {
+        return value<T>(in);
+    }
+
     template<typename U, typename... T>
     inline
     value<U> make_op(ops::type_t type, T&&... args)
     {
         value<U> val;
         val.type = type;
-        val.args = {args...};
+        val.args = {create_as<U>(std::forward<T>(args))...};
         val.value_payload = std::nullopt;
 
         if constexpr(std::is_same_v<U, std::monostate>)
@@ -2344,7 +2374,7 @@ namespace dual_types
 
     template<typename T>
     inline
-    value<T> make_op(ops::type_t type, const std::vector<value<T>>& args)
+    value<T> make_op_vec(ops::type_t type, const std::vector<value<T>>& args)
     {
         value<T> val;
         val.type = type;
