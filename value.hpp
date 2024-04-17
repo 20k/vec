@@ -1276,12 +1276,152 @@ namespace dual_types
             return *this;
         }
 
+        #define DUAL_CHECK1(x, y) if(type == x) { return y(args[0].dual(sym)); }
+        #define DUAL_CHECK2(x, y) if(type == x) { return y(args[0].dual(sym), args[1].dual(sym)); }
+        #define DUAL_CHECK3(x, y) if(type == x) { return y(args[0].dual(sym), args[1].dual(sym), args[2].dual(sym)); }
+
+        #define DUAL_CHECK21(x, y) if(type == x) { return y(forw(args[0])); }
+        #define DUAL_CHECK22(x, y) if(type == x) { return y(forw(args[0]), forw(args[1])); }
+        #define DUAL_CHECK23(x, y) if(type == x) { return y(forw(args[0]), forw(args[1]), forw(args[2])); }
+
+        dual_types::dual_v<value<T>> dual2(const value<T>& root, const value<T>& derivative) const
+        {
+            using namespace ops;
+
+            auto forw = [&](const value<T>& in)
+            {
+                return in.dual2(root, derivative);
+            };
+
+            if(type == VALUE)
+            {
+                dual_types::dual_v<value<T>> ret;
+
+                if(equivalent(*this, root))
+                {
+                    ret.real = root;
+                    ret.dual = derivative;
+                }
+                else
+                {
+                    ret.real = root;
+                    ret.dual = 0;
+                }
+
+                return ret;
+            }
+            if(type == PLUS)
+            {
+                return forw(args[0]) + forw(args[1]);
+            }
+            if(type == COMBO_PLUS)
+            {
+                std::vector<dual_types::dual_v<value<T>>> vals;
+
+                for(const auto& i : args)
+                {
+                    vals.push_back(forw(i));
+                }
+
+                return pairwise_reduce(vals, [](const auto& v1, const auto& v2){return v1 + v2;});
+            }
+            if(type == COMBO_MULTIPLY)
+            {
+                std::vector<dual_types::dual_v<value<T>>> vals;
+
+                for(const auto& i : args)
+                {
+                    vals.push_back(forw(i));
+                }
+
+                return pairwise_reduce(vals, [](const auto& v1, const auto& v2){return v1 * v2;});
+            }
+            if(type == UMINUS)
+            {
+                return -forw(args[0]);
+            }
+            if(type == MINUS)
+            {
+                return forw(args[0]) - forw(args[1]);
+            }
+            if(type == MULTIPLY)
+            {
+                return forw(args[0]) * forw(args[1]);
+            }
+            if(type == DIVIDE)
+            {
+                return forw(args[0]) / forw(args[1]);
+            }
+            /*if(type == MODULUS)
+            {
+
+            }*/
+            /*if(type == AND)
+            {
+
+            }*/
+            if(type == LESS)
+            {
+                return forw(args[0]) < forw(args[1]);
+            }
+            if(type == LESS_EQUAL)
+            {
+                return forw(args[0]) <= forw(args[1]);
+            }
+
+            if(type == FMA || type == MAD)
+            {
+                return forw(args[0]) * forw(args[1]) + forw(args[2]);
+            }
+
+            /*if(type == EQUAL)
+            {
+                return args[0].dual(sym) == args[1].dual(sym);
+            }*/
+
+            /*if(type == GREATER)
+            {
+                return args[0].dual(sym) > args[1].dual(sym);
+            }
+            if(type == GREATER_EQUAL)
+            {
+                return args[0].dual(sym) >= args[1].dual(sym);
+            }*/
+
+            DUAL_CHECK21(SIN, sin);
+            DUAL_CHECK21(COS, cos);
+            DUAL_CHECK21(TAN, tan);
+            DUAL_CHECK21(ASIN, asin);
+            DUAL_CHECK21(ACOS, acos);
+            DUAL_CHECK21(ATAN, atan);
+            DUAL_CHECK22(ATAN2, atan2);
+            DUAL_CHECK21(EXP, exp);
+            DUAL_CHECK21(SQRT, sqrt);
+            DUAL_CHECK21(SINH, sinh);
+            DUAL_CHECK21(COSH, cosh);
+            DUAL_CHECK21(TANH, tanh);
+            DUAL_CHECK21(LOG, log);
+            //DUAL_CHECK1(ISFINITE, isfinite);
+            //DUAL_CHECK1(SIGNBIT, signbit);
+            //DUAL_CHECK1(SIGN, sign);
+            DUAL_CHECK21(FABS, fabs);
+            //DUAL_CHECK1(ABS, abs);
+
+            if(type == SELECT)
+            {
+                return dual_types::select(forw(args[0]), forw(args[1]), args[2]);
+            }
+
+            DUAL_CHECK22(POW, pow);
+            DUAL_CHECK22(MAX, max);
+            DUAL_CHECK22(MIN, min);
+            DUAL_CHECK21(LAMBERT_W0, lambert_w0);
+
+            assert(false);
+        }
+
         dual_types::dual_v<value<T>> dual(const std::string& sym) const
         {
-            #define DUAL_CHECK1(x, y) if(type == x) { return y(args[0].dual(sym)); }
-            #define DUAL_CHECK2(x, y) if(type == x) { return y(args[0].dual(sym), args[1].dual(sym)); }
-            #define DUAL_CHECK3(x, y) if(type == x) { return y(args[0].dual(sym), args[1].dual(sym), args[2].dual(sym)); }
-
             using namespace ops;
 
             if(type == VALUE)
