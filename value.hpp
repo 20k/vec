@@ -689,7 +689,6 @@ namespace dual_types
 
         std::string original_type = name_type(T());
         bool is_mutable = false;
-        bool is_memory_access = false;
 
         value(){value_payload = T{}; type = ops::VALUE;}
         //value(T v){value_payload = v; type = ops::VALUE;}
@@ -713,6 +712,11 @@ namespace dual_types
             }, val);
         }
 
+        bool is_memory_access()
+        {
+            return type == ops::BRACKET || type == ops::BRACKET2 || type == ops::BRACKET_LINEAR;
+        }
+
         template<typename U>
         U reinterpret_as() const
         {
@@ -721,7 +725,6 @@ namespace dual_types
             result.value_payload = std::nullopt;
             result.original_type = original_type;
             result.is_mutable = is_mutable;
-            result.is_memory_access = is_memory_access;
 
             if(value_payload.has_value())
             {
@@ -755,7 +758,6 @@ namespace dual_types
                 result.value_payload = std::nullopt;
                 result.original_type = original_type;
                 result.is_mutable = is_mutable;
-                result.is_memory_access = is_memory_access;
 
                 if(value_payload.has_value())
                 {
