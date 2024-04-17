@@ -1874,7 +1874,7 @@ namespace dual_types
 
         int argc = op.args.size();
 
-        assert(argc == 2 || argc == 3 || argc == 5 || argc == 7);
+        assert(argc == 2 || argc == 3 || argc == 5 || argc == 7 || argc == 9);
 
         std::string name = type_to_string(op.args[0], *this);
 
@@ -1895,7 +1895,7 @@ namespace dual_types
             return "(" + name + "[" + type_to_string(y * width + x, *this) + "])";
         }
 
-        ///2d indexing
+        ///3d indexing
         ///"name", px, py, pz, dx, dy, dz
         if(argc == 7)
         {
@@ -1906,6 +1906,21 @@ namespace dual_types
             auto height = op.args[5];
 
             return "(" + name + "[" + type_to_string(z * width * height + y * width + x) + "])";
+        }
+
+        ///4d indexing
+        ///"name", px, py, pz, pw, dx, dy, dz, dw
+        if(argc == 9)
+        {
+            auto x = op.args[1];
+            auto y = op.args[2];
+            auto z = op.args[3];
+            auto w = op.args[4];
+            auto width = op.args[5];
+            auto height = op.args[6];
+            auto depth = op.args[7];
+
+            return "(" + name + "[" + type_to_string(w * width * height * depth + z * width * height + y * width + x) + "])";
         }
 
         return std::nullopt;
