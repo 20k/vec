@@ -2748,36 +2748,92 @@ namespace dual_types
 
         namespace detail
         {
-            static thread_local inline std::vector<std::shared_ptr<context_base>> contexts;
+            #define MANAGE_CONTEXT(ctx) context_manager _(ctx)
 
-            template<typename T>
+            static thread_local inline std::vector<std::variant<std::shared_ptr<context_base>, context_base*>> contexts;
+
             inline
-            std::shared_ptr<T> push_context()
+            void push_context(context_base* base)
             {
-                std::shared_ptr<T> ctx = std::make_shared<T>();
-
-                contexts.push_back(std::static_pointer_cast<context_base>(ctx));
-
-                return ctx;
-            }
-
-            template<typename T>
-            inline
-            std::shared_ptr<T> get_context()
-            {
-                return std::dynamic_pointer_cast<T>(contexts.back());
+                contexts.push_back(base);
             }
 
             inline
-            std::shared_ptr<context_base> get_context_base()
+            void push_context(std::shared_ptr<context_base> base)
             {
-                return contexts.back();
+                contexts.push_back(base);
             }
 
             inline
             void pop_context()
             {
+                assert(contexts.size() > 0);
                 contexts.pop_back();
+            }
+
+            template<typename T>
+            struct context_manager
+            {
+                context_manager(const context_manager&) = delete;
+                context_manager& operator=(const context_manager&) = delete;
+                context_manager(context_manager&&) = delete;
+                context_manager& operator=(context_manager&&) = delete;
+
+                context_manager(T base)
+                {
+                    push_context(base);
+                }
+
+                ~context_manager()
+                {
+                    pop_context();
+                }
+            };
+
+            ///pushes it to the global stack
+            template<typename T>
+            inline
+            context_manager<std::shared_ptr<T>> make_context()
+            {
+                std::shared_ptr<T> ctx = std::make_shared<T>();
+
+                return context_manager(ctx);
+            }
+
+            template<typename T>
+            inline
+            T* get_context()
+            {
+                T* out = nullptr;
+
+                std::visit([&](auto&& arg)
+                {
+                    using U = std::decay_t<decltype(arg)>;
+
+                    if constexpr(std::is_same_v<U, std::shared_ptr<context_base>>)
+                    {
+                        out = dynamic_cast<T*>(arg.get());
+                    }
+
+                    else if constexpr(std::is_same_v<U, context_base*>)
+                    {
+                        out = dynamic_cast<T*>(arg);
+                    }
+                    else
+                    {
+                        #ifndef __clang__
+                        static_assert(false);
+                        #endif
+                    }
+                },contexts.back());
+
+                return out;
+            }
+
+            inline
+            context_base* get_context_base()
+            {
+                return get_context<context_base>();
             }
         }
 
