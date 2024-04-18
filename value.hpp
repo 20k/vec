@@ -1284,29 +1284,34 @@ namespace dual_types
         #define DUAL_CHECK22(x, y) if(type == x) { return y(forw(args[0]), forw(args[1])); }
         #define DUAL_CHECK23(x, y) if(type == x) { return y(forw(args[0]), forw(args[1]), forw(args[2])); }
 
-        dual_types::dual_v<value<T>> dual2(const value<T>& root, const value<T>& derivative) const
+        dual_types::dual_v<value<T>> dual2(const std::vector<std::pair<value<T>, value<T>>>& substitutions) const
         {
             using namespace ops;
 
             auto forw = [&](const value<T>& in)
             {
-                return in.dual2(root, derivative);
+                return in.dual2(substitutions);
             };
+
+            for(const auto& [root, derivative] : substitutions)
+            {
+                if(equivalent(*this, root))
+                {
+                    dual_types::dual_v<value<T>> ret;
+
+                    ret.real = root;
+                    ret.dual = derivative;
+
+                    return ret;
+                }
+            }
 
             if(type == VALUE)
             {
                 dual_types::dual_v<value<T>> ret;
 
-                if(equivalent(*this, root))
-                {
-                    ret.real = root;
-                    ret.dual = derivative;
-                }
-                else
-                {
-                    ret.real = root;
-                    ret.dual = 0;
-                }
+                ret.real = *this;
+                ret.dual = 0;
 
                 return ret;
             }
