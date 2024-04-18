@@ -2667,9 +2667,9 @@ namespace dual_types
 
         template<typename T>
         inline
-        value<T> return_v(const value<T>& in)
+        value<std::monostate> return_v(const value<T>& in)
         {
-            return make_op<T>(ops::RETURN, in);
+            return make_op<std::monostate>(ops::RETURN, in);
         }
 
         inline
@@ -2769,11 +2769,59 @@ namespace dual_types
             }
 
             inline
+            std::shared_ptr<context_base> get_context_base()
+            {
+                return contexts.back();
+            }
+
+            inline
             void pop_context()
             {
                 contexts.pop_back();
             }
+        }
 
+        template<typename T, typename U, typename Func>
+        inline
+        void for_e(const U& loop_variable_name, const value<T>& init, const value<T>& condition, const value<T>& post, Func&& func)
+        {
+            auto ctx_ptr = detail::get_context_base();
+
+            for_e(*ctx_ptr, loop_variable_name, init, condition, post, std::forward<Func>(func));
+        }
+
+        template<typename Ctx, typename T, typename Func>
+        inline
+        void if_e(const value<T>& condition, Func&& func)
+        {
+            auto ctx_ptr = detail::get_context_base();
+
+            if_e(condition, *ctx_ptr, std::forward<Func>(func));
+        }
+
+        inline
+        void break_e()
+        {
+            auto ctx_ptr = detail::get_context_base();
+
+            ctx_ptr->exec(dual_types::cf::break_s());
+        }
+
+        template<typename T>
+        inline
+        void return_e(const value<T>& in)
+        {
+            auto ctx_ptr = detail::get_context_base();
+
+            ctx_ptr->exec(dual_types::cf::return_v(in));
+        }
+
+        inline
+        void return_e()
+        {
+            auto ctx_ptr = detail::get_context_base();
+
+            ctx_ptr->exec(dual_types::cf::return_v());
         }
     }
 
