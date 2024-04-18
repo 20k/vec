@@ -2656,27 +2656,27 @@ namespace dual_types
         return select<T, U>(if_false, if_true, condition);
     }
 
-    inline
-    value<std::monostate> make_return_s()
+    namespace cf
     {
-        return make_op<std::monostate>(ops::RETURN);
-    }
+        inline
+        value<std::monostate> break_s()
+        {
+            return make_op<std::monostate>(ops::BREAK);
+        }
 
-    inline
-    value<std::monostate> make_break_s()
-    {
-        return make_op<std::monostate>(ops::BREAK);
-    }
+        template<typename T>
+        inline
+        value<T> return_v(const value<T>& in)
+        {
+            return make_op<T>(ops::RETURN, in);
+        }
 
-    template<typename T>
-    inline
-    value<T> return_v(const value<T>& in)
-    {
-        return make_op<T>(ops::RETURN, in);
+        inline
+        value<std::monostate> return_v()
+        {
+            return make_op<std::monostate>(ops::RETURN);
+        }
     }
-
-    const inline value<std::monostate> return_s = make_return_s();
-    const inline value<std::monostate> break_s = make_break_s();
 
     ///true branch
     ///if with to-execute on true. This should be removed
@@ -3097,6 +3097,8 @@ T divide_with_callback(const T& top, const T& bottom, U&& if_nonfinite)
 using dual = dual_types::dual_v<dual_types::value<float>>;
 using dual_complex = dual_types::dual_v<dual_types::complex_v<dual_types::value<float>>>;
 
+using namespace dual_types::cf;
+
 template<typename T>
 using value_base = dual_types::value<T>;
 using value = dual_types::value<float>;
@@ -3106,7 +3108,6 @@ using value_us = dual_types::value<unsigned short>;
 using value_v = dual_types::value<std::monostate>;
 using value_h = dual_types::value<float16>;
 
-
 template<typename T>
 using value_base_mut = dual_types::value_mut<T>;
 using value_mut = dual_types::value_mut<float>;
@@ -3115,9 +3116,6 @@ using value_s_mut = dual_types::value_mut<short>;
 using value_us_mut = dual_types::value_mut<unsigned short>;
 using value_v_mut = dual_types::value_mut<std::monostate>;
 using value_h_mut = dual_types::value_mut<float16>;
-
-const inline auto return_s = dual_types::make_return_s();
-const inline auto break_s = dual_types::make_break_s();
 
 using v4f = tensor<value, 4>;
 using v4i = tensor<value_i, 4>;
