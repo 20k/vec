@@ -12,6 +12,7 @@
 #include <CL/cl.h>
 #include <concepts>
 #include <source_location>
+#include <memory>
 
 #ifndef __clang__
 #include <stdfloat>
@@ -2733,6 +2734,47 @@ namespace dual_types
         func(val);
 
         ctx.exec(block_end());
+    }
+
+    namespace implicit
+    {
+        struct context_base
+        {
+            virtual void exec(const value<std::monostate>& st)
+            {
+                assert(false);
+            }
+        };
+
+        namespace detail
+        {
+            static thread_local inline std::vector<std::shared_ptr<context_base>> contexts;
+
+            template<typename T>
+            inline
+            std::shared_ptr<T> push_context()
+            {
+                std::shared_ptr<T> ctx = std::make_shared<T>();
+
+                contexts.push_back(std::static_pointer_cast<context_base>(ctx));
+
+                return ctx;
+            }
+
+            template<typename T>
+            inline
+            std::shared_ptr<T> get_context()
+            {
+                return std::dynamic_pointer_cast<T>(contexts.back());
+            }
+
+            inline
+            void pop_context()
+            {
+                contexts.pop_back();
+            }
+
+        }
     }
 
     ///select
