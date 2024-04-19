@@ -2897,7 +2897,7 @@ namespace dual_types
         {
             auto ctx_ptr = detail::get_context_base();
 
-            ctx_ptr->exec(assign(std::forward<T>(t), std::forward<U>(u)));
+            ctx_ptr->exec(assign(std::forward<T>(t), std::forward<U>(u)).template reinterpret_as<value<std::monostate>>());
         }
     }
 
