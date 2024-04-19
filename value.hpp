@@ -24,6 +24,8 @@ using float16 = std::float16_t;
 using float16 = _Float16;
 #endif
 
+std::string get_stacktrace();
+
 namespace dual_types
 {
     template<typename T>
@@ -2659,6 +2661,7 @@ namespace dual_types
 
     namespace cf
     {
+        [[nodiscard]]
         inline
         value<std::monostate> break_s()
         {
@@ -2666,12 +2669,14 @@ namespace dual_types
         }
 
         template<typename T>
+        [[nodiscard]]
         inline
         value<std::monostate> return_v(const value<T>& in)
         {
             return make_op<std::monostate>(ops::RETURN, in);
         }
 
+        [[nodiscard]]
         inline
         value<std::monostate> return_v()
         {
@@ -2748,27 +2753,33 @@ namespace dual_types
 
         namespace detail
         {
-            #define MANAGE_CONTEXT(ctx) context_manager _(ctx)
+            #define MANAGE_CONTEXT(ctx) dual_types::implicit::detail::context_manager hello(&ctx)
 
-            static thread_local inline std::vector<std::variant<std::shared_ptr<context_base>, context_base*>> contexts;
+            inline
+            std::vector<std::variant<std::shared_ptr<context_base>, context_base*>>& get_contexts()
+            {
+                thread_local std::vector<std::variant<std::shared_ptr<context_base>, context_base*>> contexts;
+
+                return contexts;
+            }
 
             inline
             void push_context(context_base* base)
             {
-                contexts.push_back(base);
+                get_contexts().push_back(base);
             }
 
             inline
             void push_context(std::shared_ptr<context_base> base)
             {
-                contexts.push_back(base);
+                get_contexts().push_back(base);
             }
 
             inline
             void pop_context()
             {
-                assert(contexts.size() > 0);
-                contexts.pop_back();
+                assert(get_contexts().size() > 0);
+                get_contexts().pop_back();
             }
 
             template<typename T>
@@ -2797,7 +2808,7 @@ namespace dual_types
             {
                 std::shared_ptr<T> ctx = std::make_shared<T>();
 
-                return context_manager(ctx);
+                return context_manager<std::shared_ptr<T>>(ctx);
             }
 
             template<typename T>
@@ -2825,7 +2836,7 @@ namespace dual_types
                         static_assert(false);
                         #endif
                     }
-                },contexts.back());
+                }, get_contexts().back());
 
                 return out;
             }
@@ -2846,7 +2857,7 @@ namespace dual_types
             for_e(*ctx_ptr, loop_variable_name, init, condition, post, std::forward<Func>(func));
         }
 
-        template<typename Ctx, typename T, typename Func>
+        template<typename T, typename Func>
         inline
         void if_e(const value<T>& condition, Func&& func)
         {
@@ -2878,6 +2889,15 @@ namespace dual_types
             auto ctx_ptr = detail::get_context_base();
 
             ctx_ptr->exec(dual_types::cf::return_v());
+        }
+
+        template<typename T, typename U>
+        inline
+        void assign_e(T&& t, U&& u)
+        {
+            auto ctx_ptr = detail::get_context_base();
+
+            ctx_ptr->exec(assign(std::forward<T>(t), std::forward<U>(u)));
         }
     }
 
