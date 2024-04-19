@@ -2749,6 +2749,11 @@ namespace dual_types
             {
                 assert(false);
             }
+
+            virtual int get_id()
+            {
+                assert(false);
+            }
         };
 
         namespace detail
@@ -2913,6 +2918,15 @@ namespace dual_types
         {
             return in.as_mutable(*detail::get_context_base());
         }
+
+        template<typename T>
+        inline
+        value<T> declare(const value<T>& v1, const std::string& name = "")
+        {
+            auto ctx_ptr = detail::get_context_base();
+
+            return declare(*ctx_ptr, v1, name);
+        }
     }
 
     ///select
@@ -3028,7 +3042,7 @@ namespace dual_types
     {
         if(name == "")
         {
-            int id = executor.sequenced.size();
+            int id = executor.get_id();
 
             std::string fname = "declared" + std::to_string(id);
             return declare_array<T, N...>(executor, fname);
@@ -3047,7 +3061,7 @@ namespace dual_types
     {
         if(name == "")
         {
-            int id = executor.sequenced.size();
+            int id = executor.get_id();
 
             std::string fname = "declared" + std::to_string(id);
             return declare_impl(executor, v1, fname, is_mutable);
@@ -3057,7 +3071,7 @@ namespace dual_types
 
         declare_op.is_mutable = is_mutable;
 
-        executor.exec(declare_op);
+        executor.exec(declare_op.as_generic());
 
         value<T> result = name;
         result.is_mutable = declare_op.is_mutable;
