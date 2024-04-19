@@ -2257,6 +2257,12 @@ namespace dual_types
         return false;
     }*/
 
+    inline
+    std::string type_to_string(const std::string& in)
+    {
+        return in;
+    }
+
     template<typename Unused>
     inline
     std::string type_to_string(const value<Unused>& op, const codegen& cg)
@@ -2728,11 +2734,11 @@ namespace dual_types
     inline
     void for_e(Ctx& ctx, const U& loop_variable_name, const value<T>& init, const value<T>& condition, const value<T>& post, Func&& func)
     {
-        int id = ctx.sequenced.size();
+        int id = ctx.get_id();
 
         ctx.exec(for_b(type_to_string(loop_variable_name), init, condition, post));
 
-        auto val = loop_variable_name;
+        value<T> val = loop_variable_name;
 
         ctx.exec(block_start());
 
@@ -2923,9 +2929,28 @@ namespace dual_types
         inline
         value<T> declare(const value<T>& v1, const std::string& name = "")
         {
-            auto ctx_ptr = detail::get_context_base();
+            return declare(*detail::get_context_base(), v1, name);
+        }
 
-            return declare(*ctx_ptr, v1, name);
+        template<typename T, int N>
+        inline
+        tensor<value<T>, N> declare(const tensor<value<T>, N>& v1)
+        {
+            return declare(*detail::get_context_base(), v1);
+        }
+
+        template<typename T>
+        inline
+        value_mut<T> declare_mut(const value<T>& v1, const std::string& name = "")
+        {
+            return declare_mut(*detail::get_context_base(), v1, name);
+        }
+
+        template<typename T, int N>
+        inline
+        tensor<value_mut<T>, N> declare_mut(const tensor<value<T>, N>& v1)
+        {
+            return declare_mut(*detail::get_context_base(), v1);
         }
     }
 
