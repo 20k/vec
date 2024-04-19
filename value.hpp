@@ -672,7 +672,7 @@ namespace dual_types
 
             assert(v.is_mutable);
 
-            ctx.exec(assign(v, to_set));
+            ctx.exec(assign(v, to_set).as_generic());
         }
     };
 
@@ -2898,6 +2898,20 @@ namespace dual_types
             auto ctx_ptr = detail::get_context_base();
 
             ctx_ptr->exec(assign(std::forward<T>(t), std::forward<U>(u)).template reinterpret_as<value<std::monostate>>());
+        }
+
+        template<typename T>
+        inline
+        auto mut(T&& in)
+        {
+            return in.as_mutable(*detail::get_context_base());
+        }
+
+        template<typename T>
+        inline
+        auto as_mutable(T&& in)
+        {
+            return in.as_mutable(*detail::get_context_base());
         }
     }
 
