@@ -743,6 +743,14 @@ namespace dual_types
         }
 
         template<typename U>
+        value<U> assert_as() const
+        {
+            assert(original_type == name_type(U()));
+
+            return reinterpret_as<value<U>>();
+        }
+
+        template<typename U>
         value<U> convert() const
         {
             value<U> op = make_op<U>(ops::CONVERT, reinterpret_as<value<U>>(), name_type(U()));
@@ -2734,7 +2742,7 @@ namespace dual_types
     inline
     void for_e(Ctx& ctx, const U& loop_variable_name, const value<T>& init, const value<T>& condition, const value<T>& post, Func&& func)
     {
-        int id = ctx.get_id();
+        //int id = ctx.get_id();
 
         ctx.exec(for_b(type_to_string(loop_variable_name), init, condition, post));
 
