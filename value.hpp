@@ -12,6 +12,7 @@
 #include <CL/cl.h>
 #include <concepts>
 #include <source_location>
+#include <memory>
 
 #ifndef __clang__
 #include <stdfloat>
@@ -22,6 +23,8 @@ using float16 = std::float16_t;
 #else
 using float16 = _Float16;
 #endif
+
+std::string get_stacktrace();
 
 namespace dual_types
 {
@@ -341,6 +344,8 @@ namespace dual_types
             ROUND,
 
             BRACKET,
+            BRACKET2,
+            BRACKET_LINEAR,
             DECLARE,
             DECLARE_ARRAY,
 
@@ -442,6 +447,8 @@ namespace dual_types
             "ceil",
             "round",
             "bad#bracket",
+            "bad#bracket2",
+            "bad#bracketlinear",
             "bad#declare",
             "bad#declarearray",
             "generated#function#failure",
@@ -508,29 +515,19 @@ namespace dual_types
     template<typename T>
     inline
     T mad(T a, T b, T c)
+
     {
         return a * b + c;
     }
 
     struct codegen
     {
-        virtual std::optional<std::string> bracket2(const value<std::monostate>& v)
-        {
-            assert(false);
-
-            return std::nullopt;
-        }
-
-        virtual std::optional<std::string> bracket_linear(const value<std::monostate>& v)
-        {
-            assert(false);
-
-            return std::nullopt;
-        }
+        inline virtual std::optional<std::string> bracket2(const value<std::monostate>& op) const;
+        inline virtual std::optional<std::string> bracket_linear(const value<std::monostate>& op) const;
     };
 
     template<typename T>
-    std::string type_to_string(const value<T>& op, codegen cg = codegen());
+    std::string type_to_string(const value<T>& op, const codegen& cg = codegen());
 
     template<typename U, typename... T>
     value<U> make_op(ops::type_t type, T&&... args);
@@ -675,7 +672,7 @@ namespace dual_types
 
             assert(v.is_mutable);
 
-            ctx.exec(assign(v, to_set));
+            ctx.exec(assign(v, to_set).as_generic());
         }
     };
 
@@ -695,7 +692,6 @@ namespace dual_types
 
         std::string original_type = name_type(T());
         bool is_mutable = false;
-        bool is_memory_access = false;
 
         value(){value_payload = T{}; type = ops::VALUE;}
         //value(T v){value_payload = v; type = ops::VALUE;}
@@ -719,6 +715,11 @@ namespace dual_types
             }, val);
         }
 
+        bool is_memory_access()
+        {
+            return type == ops::BRACKET || type == ops::BRACKET2 || type == ops::BRACKET_LINEAR;
+        }
+
         template<typename U>
         U reinterpret_as() const
         {
@@ -727,7 +728,6 @@ namespace dual_types
             result.value_payload = std::nullopt;
             result.original_type = original_type;
             result.is_mutable = is_mutable;
-            result.is_memory_access = is_memory_access;
 
             if(value_payload.has_value())
             {
@@ -740,6 +740,14 @@ namespace dual_types
             }
 
             return result;
+        }
+
+        template<typename U>
+        value<U> assert_as() const
+        {
+            assert(original_type == name_type(U()));
+
+            return reinterpret_as<value<U>>();
         }
 
         template<typename U>
@@ -761,7 +769,6 @@ namespace dual_types
                 result.value_payload = std::nullopt;
                 result.original_type = original_type;
                 result.is_mutable = is_mutable;
-                result.is_memory_access = is_memory_access;
 
                 if(value_payload.has_value())
                 {
@@ -1247,7 +1254,7 @@ namespace dual_types
                 //if(final_args.size() == 2)
                 //    return *this;
 
-                return make_op<T>(ops::COMBO_PLUS, final_args);
+                return make_op_vec<T>(ops::COMBO_PLUS, final_args);
             }
 
             #ifdef COMBO_MULT
@@ -1280,12 +1287,157 @@ namespace dual_types
             return *this;
         }
 
+        #define DUAL_CHECK1(x, y) if(type == x) { return y(args[0].dual(sym)); }
+        #define DUAL_CHECK2(x, y) if(type == x) { return y(args[0].dual(sym), args[1].dual(sym)); }
+        #define DUAL_CHECK3(x, y) if(type == x) { return y(args[0].dual(sym), args[1].dual(sym), args[2].dual(sym)); }
+
+        #define DUAL_CHECK21(x, y) if(type == x) { return y(forw(args[0])); }
+        #define DUAL_CHECK22(x, y) if(type == x) { return y(forw(args[0]), forw(args[1])); }
+        #define DUAL_CHECK23(x, y) if(type == x) { return y(forw(args[0]), forw(args[1]), forw(args[2])); }
+
+        dual_types::dual_v<value<T>> dual2(const std::vector<std::pair<value<T>, value<T>>>& substitutions) const
+        {
+            using namespace ops;
+
+            auto forw = [&](const value<T>& in)
+            {
+                return in.dual2(substitutions);
+            };
+
+            for(const auto& [root, derivative] : substitutions)
+            {
+                if(equivalent(*this, root))
+                {
+                    dual_types::dual_v<value<T>> ret;
+
+                    ret.real = root;
+                    ret.dual = derivative;
+
+                    return ret;
+                }
+            }
+
+            if(type == VALUE)
+            {
+                dual_types::dual_v<value<T>> ret;
+
+                ret.real = *this;
+                ret.dual = 0;
+
+                return ret;
+            }
+            if(type == PLUS)
+            {
+                return forw(args[0]) + forw(args[1]);
+            }
+            if(type == COMBO_PLUS)
+            {
+                std::vector<dual_types::dual_v<value<T>>> vals;
+
+                for(const auto& i : args)
+                {
+                    vals.push_back(forw(i));
+                }
+
+                return pairwise_reduce(vals, [](const auto& v1, const auto& v2){return v1 + v2;});
+            }
+            if(type == COMBO_MULTIPLY)
+            {
+                std::vector<dual_types::dual_v<value<T>>> vals;
+
+                for(const auto& i : args)
+                {
+                    vals.push_back(forw(i));
+                }
+
+                return pairwise_reduce(vals, [](const auto& v1, const auto& v2){return v1 * v2;});
+            }
+            if(type == UMINUS)
+            {
+                return -forw(args[0]);
+            }
+            if(type == MINUS)
+            {
+                return forw(args[0]) - forw(args[1]);
+            }
+            if(type == MULTIPLY)
+            {
+                return forw(args[0]) * forw(args[1]);
+            }
+            if(type == DIVIDE)
+            {
+                return forw(args[0]) / forw(args[1]);
+            }
+            /*if(type == MODULUS)
+            {
+
+            }*/
+            /*if(type == AND)
+            {
+
+            }*/
+            if(type == LESS)
+            {
+                return forw(args[0]) < forw(args[1]);
+            }
+            if(type == LESS_EQUAL)
+            {
+                return forw(args[0]) <= forw(args[1]);
+            }
+
+            if(type == FMA || type == MAD)
+            {
+                return forw(args[0]) * forw(args[1]) + forw(args[2]);
+            }
+
+            /*if(type == EQUAL)
+            {
+                return args[0].dual(sym) == args[1].dual(sym);
+            }*/
+
+            /*if(type == GREATER)
+            {
+                return args[0].dual(sym) > args[1].dual(sym);
+            }
+            if(type == GREATER_EQUAL)
+            {
+                return args[0].dual(sym) >= args[1].dual(sym);
+            }*/
+
+            DUAL_CHECK21(SIN, sin);
+            DUAL_CHECK21(COS, cos);
+            DUAL_CHECK21(TAN, tan);
+            DUAL_CHECK21(ASIN, asin);
+            DUAL_CHECK21(ACOS, acos);
+            DUAL_CHECK21(ATAN, atan);
+            DUAL_CHECK22(ATAN2, atan2);
+            DUAL_CHECK21(EXP, exp);
+            DUAL_CHECK21(SQRT, sqrt);
+            DUAL_CHECK21(SINH, sinh);
+            DUAL_CHECK21(COSH, cosh);
+            DUAL_CHECK21(TANH, tanh);
+            DUAL_CHECK21(LOG, log);
+            //DUAL_CHECK1(ISFINITE, isfinite);
+            //DUAL_CHECK1(SIGNBIT, signbit);
+            //DUAL_CHECK1(SIGN, sign);
+            DUAL_CHECK21(FABS, fabs);
+            //DUAL_CHECK1(ABS, abs);
+
+            if(type == SELECT)
+            {
+                return dual_types::select(forw(args[0]), forw(args[1]), args[2]);
+            }
+
+            DUAL_CHECK22(POW, pow);
+            DUAL_CHECK22(MAX, max);
+            DUAL_CHECK22(MIN, min);
+            DUAL_CHECK21(LAMBERT_W0, lambert_w0);
+
+            assert(false);
+        }
+
         dual_types::dual_v<value<T>> dual(const std::string& sym) const
         {
-            #define DUAL_CHECK1(x, y) if(type == x) { return y(args[0].dual(sym)); }
-            #define DUAL_CHECK2(x, y) if(type == x) { return y(args[0].dual(sym), args[1].dual(sym)); }
-            #define DUAL_CHECK3(x, y) if(type == x) { return y(args[0].dual(sym), args[1].dual(sym), args[2].dual(sym)); }
-
             using namespace ops;
 
             if(type == VALUE)
@@ -1534,7 +1686,7 @@ namespace dual_types
                 if(type == ops::ASSIGN && i == 0)
                     continue;
 
-                if(type == ops::BRACKET && i == 0)
+                if((type == ops::BRACKET || type == ops::BRACKET2 || type == ops::BRACKET_LINEAR) && i == 0)
                     continue;
 
                 in(args[i]);
@@ -1567,7 +1719,7 @@ namespace dual_types
                 if(type == ops::ASSIGN && i == 0)
                     continue;
 
-                if(type == ops::BRACKET && i == 0)
+                if((type == ops::BRACKET || type == ops::BRACKET2 || type == ops::BRACKET_LINEAR) && i == 0)
                     continue;
 
                 in(args[i]);
@@ -1733,11 +1885,11 @@ namespace dual_types
             assert(false);
         }
 
-        template<typename U>
+        /*template<typename U>
         value<T> bracket(const value<U>& idx)
         {
             return make_op<T>(ops::BRACKET, *this, idx.template reinterpret_as<value<T>>());
-        }
+        }*/
 
         value<T>& operator+=(const value<T>& d1)
         {
@@ -1872,6 +2024,72 @@ namespace dual_types
             return make_op<std::monostate>(ops::COMMA, d1.as_generic(), d2.as_generic());
         }*/
     };
+
+    std::optional<std::string> codegen::bracket2(const value<std::monostate>& op) const
+    {
+        ///the way this works then is that we pass in dim information, eg
+        ///"name", px, py, pz, dx, dy, dz
+
+        int argc = op.args.size();
+
+        assert(argc == 2 || argc == 3 || argc == 5 || argc == 7 || argc == 9);
+
+        std::string name = type_to_string(op.args[0], *this);
+
+        ///"name", px, dx
+        if(argc == 2 || argc == 3)
+        {
+            return "(" + name + "[" + type_to_string(op.args[1], *this) + "])";;
+        }
+
+        ///2d indexing
+        ///"name", px, py, dx, dy
+        if(argc == 5)
+        {
+            auto x = op.args[1];
+            auto y = op.args[2];
+            auto width = op.args[3];
+
+            return "(" + name + "[" + type_to_string(y * width + x, *this) + "])";
+        }
+
+        ///3d indexing
+        ///"name", px, py, pz, dx, dy, dz
+        if(argc == 7)
+        {
+            auto x = op.args[1];
+            auto y = op.args[2];
+            auto z = op.args[3];
+            auto width = op.args[4];
+            auto height = op.args[5];
+
+            return "(" + name + "[" + type_to_string(z * width * height + y * width + x) + "])";
+        }
+
+        ///4d indexing
+        ///"name", px, py, pz, pw, dx, dy, dz, dw
+        if(argc == 9)
+        {
+            auto x = op.args[1];
+            auto y = op.args[2];
+            auto z = op.args[3];
+            auto w = op.args[4];
+            auto width = op.args[5];
+            auto height = op.args[6];
+            auto depth = op.args[7];
+
+            return "(" + name + "[" + type_to_string(w * width * height * depth + z * width * height + y * width + x) + "])";
+        }
+
+        return std::nullopt;
+    }
+
+    std::optional<std::string> codegen::bracket_linear(const value<std::monostate>& op) const
+    {
+        ///same as bracket2, except that px etc can be fractional, and we do linear interpolation
+
+        return std::nullopt;
+    }
 
     template<typename T>
     struct value_mut : value<T>
@@ -2047,9 +2265,15 @@ namespace dual_types
         return false;
     }*/
 
+    inline
+    std::string type_to_string(const std::string& in)
+    {
+        return in;
+    }
+
     template<typename Unused>
     inline
-    std::string type_to_string(const value<Unused>& op, codegen cg)
+    std::string type_to_string(const value<Unused>& op, const codegen& cg)
     {
         //make it difficult to call type_to_string without the code generator
         auto type_to_string = [&](const value<Unused>& op)
@@ -2093,6 +2317,12 @@ namespace dual_types
         {
             return "(" + type_to_string(op.args[0]) + "[" + type_to_string(op.args[1]) + "])";
         }
+
+        if(op.type == ops::BRACKET2)
+            return cg.bracket2(op.as_generic()).value();
+
+        if(op.type == ops::BRACKET_LINEAR)
+            return cg.bracket_linear(op.as_generic()).value();
 
         if(op.type == ops::RETURN)
         {
@@ -2274,13 +2504,43 @@ namespace dual_types
         }
     }
 
+    template<typename T, typename U>
+    inline
+    value<T> create_as(value<U>&& in)
+    {
+        return in.template reinterpret_as<value<T>>();
+    }
+
+    template<typename T, typename U>
+    inline
+    value<T> create_as(const value<U>& in)
+    {
+        return in.template reinterpret_as<value<T>>();
+    }
+
+    template<typename T, typename U>
+    requires (std::is_arithmetic_v<U> || std::same_as<U, std::string> || std::same_as<std::decay_t<U>, const char*>)
+    inline
+    value<T> create_as(U&& in)
+    {
+        return value<T>(in);
+    }
+
+    template<typename T, typename U>
+    requires (std::is_arithmetic_v<U> || std::same_as<U, std::string> || std::same_as<std::decay_t<U>, const char*>)
+    inline
+    value<T> create_as(const U& in)
+    {
+        return value<T>(in);
+    }
+
     template<typename U, typename... T>
     inline
     value<U> make_op(ops::type_t type, T&&... args)
     {
         value<U> val;
         val.type = type;
-        val.args = {args...};
+        val.args = {create_as<U>(std::forward<T>(args))...};
         val.value_payload = std::nullopt;
 
         if constexpr(std::is_same_v<U, std::monostate>)
@@ -2293,7 +2553,7 @@ namespace dual_types
 
     template<typename T>
     inline
-    value<T> make_op(ops::type_t type, const std::vector<value<T>>& args)
+    value<T> make_op_vec(ops::type_t type, const std::vector<value<T>>& args)
     {
         value<T> val;
         val.type = type;
@@ -2413,27 +2673,30 @@ namespace dual_types
         return select<T, U>(if_false, if_true, condition);
     }
 
-    inline
-    value<std::monostate> make_return_s()
+    namespace cf
     {
-        return make_op<std::monostate>(ops::RETURN);
-    }
+        [[nodiscard]]
+        inline
+        value<std::monostate> break_s()
+        {
+            return make_op<std::monostate>(ops::BREAK);
+        }
 
-    inline
-    value<std::monostate> make_break_s()
-    {
-        return make_op<std::monostate>(ops::BREAK);
-    }
+        template<typename T>
+        [[nodiscard]]
+        inline
+        value<std::monostate> return_v(const value<T>& in)
+        {
+            return make_op<std::monostate>(ops::RETURN, in);
+        }
 
-    template<typename T>
-    inline
-    value<T> return_v(const value<T>& in)
-    {
-        return make_op<T>(ops::RETURN, in);
+        [[nodiscard]]
+        inline
+        value<std::monostate> return_v()
+        {
+            return make_op<std::monostate>(ops::RETURN);
+        }
     }
-
-    const inline value<std::monostate> return_s = make_return_s();
-    const inline value<std::monostate> break_s = make_break_s();
 
     ///true branch
     ///if with to-execute on true. This should be removed
@@ -2479,17 +2742,224 @@ namespace dual_types
     inline
     void for_e(Ctx& ctx, const U& loop_variable_name, const value<T>& init, const value<T>& condition, const value<T>& post, Func&& func)
     {
-        int id = ctx.sequenced.size();
+        //int id = ctx.get_id();
 
         ctx.exec(for_b(type_to_string(loop_variable_name), init, condition, post));
 
-        auto val = loop_variable_name;
+        value<T> val = loop_variable_name;
 
         ctx.exec(block_start());
 
         func(val);
 
         ctx.exec(block_end());
+    }
+
+    namespace implicit
+    {
+        struct context_base
+        {
+            virtual void exec(const value<std::monostate>& st)
+            {
+                assert(false);
+            }
+
+            virtual int get_id()
+            {
+                assert(false);
+            }
+        };
+
+        namespace detail
+        {
+            #define MANAGE_CONTEXT(ctx) dual_types::implicit::detail::context_manager hello(&ctx)
+
+            inline
+            std::vector<std::variant<std::shared_ptr<context_base>, context_base*>>& get_contexts()
+            {
+                thread_local std::vector<std::variant<std::shared_ptr<context_base>, context_base*>> contexts;
+
+                return contexts;
+            }
+
+            inline
+            void push_context(context_base* base)
+            {
+                get_contexts().push_back(base);
+            }
+
+            inline
+            void push_context(std::shared_ptr<context_base> base)
+            {
+                get_contexts().push_back(base);
+            }
+
+            inline
+            void pop_context()
+            {
+                assert(get_contexts().size() > 0);
+                get_contexts().pop_back();
+            }
+
+            template<typename T>
+            struct context_manager
+            {
+                context_manager(const context_manager&) = delete;
+                context_manager& operator=(const context_manager&) = delete;
+                context_manager(context_manager&&) = delete;
+                context_manager& operator=(context_manager&&) = delete;
+
+                context_manager(T base)
+                {
+                    push_context(base);
+                }
+
+                ~context_manager()
+                {
+                    pop_context();
+                }
+            };
+
+            ///pushes it to the global stack
+            template<typename T>
+            inline
+            context_manager<std::shared_ptr<T>> make_context()
+            {
+                std::shared_ptr<T> ctx = std::make_shared<T>();
+
+                return context_manager<std::shared_ptr<T>>(ctx);
+            }
+
+            template<typename T>
+            inline
+            T* get_context()
+            {
+                T* out = nullptr;
+
+                std::visit([&](auto&& arg)
+                {
+                    using U = std::decay_t<decltype(arg)>;
+
+                    if constexpr(std::is_same_v<U, std::shared_ptr<context_base>>)
+                    {
+                        out = dynamic_cast<T*>(arg.get());
+                    }
+
+                    else if constexpr(std::is_same_v<U, context_base*>)
+                    {
+                        out = dynamic_cast<T*>(arg);
+                    }
+                    else
+                    {
+                        #ifndef __clang__
+                        static_assert(false);
+                        #endif
+                    }
+                }, get_contexts().back());
+
+                return out;
+            }
+
+            inline
+            context_base* get_context_base()
+            {
+                return get_context<context_base>();
+            }
+        }
+
+        template<typename T, typename U, typename Func>
+        inline
+        void for_e(const U& loop_variable_name, const value<T>& init, const value<T>& condition, const value<T>& post, Func&& func)
+        {
+            auto ctx_ptr = detail::get_context_base();
+
+            for_e(*ctx_ptr, loop_variable_name, init, condition, post, std::forward<Func>(func));
+        }
+
+        template<typename T, typename Func>
+        inline
+        void if_e(const value<T>& condition, Func&& func)
+        {
+            auto ctx_ptr = detail::get_context_base();
+
+            if_e(condition, *ctx_ptr, std::forward<Func>(func));
+        }
+
+        inline
+        void break_e()
+        {
+            auto ctx_ptr = detail::get_context_base();
+
+            ctx_ptr->exec(dual_types::cf::break_s());
+        }
+
+        template<typename T>
+        inline
+        void return_e(const value<T>& in)
+        {
+            auto ctx_ptr = detail::get_context_base();
+
+            ctx_ptr->exec(dual_types::cf::return_v(in));
+        }
+
+        inline
+        void return_e()
+        {
+            auto ctx_ptr = detail::get_context_base();
+
+            ctx_ptr->exec(dual_types::cf::return_v());
+        }
+
+        template<typename T, typename U>
+        inline
+        void assign_e(T&& t, U&& u)
+        {
+            auto ctx_ptr = detail::get_context_base();
+
+            ctx_ptr->exec(assign(std::forward<T>(t), std::forward<U>(u)).template reinterpret_as<value<std::monostate>>());
+        }
+
+        template<typename T>
+        inline
+        auto mut(T&& in)
+        {
+            return in.as_mutable(*detail::get_context_base());
+        }
+
+        template<typename T>
+        inline
+        auto as_mutable(T&& in)
+        {
+            return in.as_mutable(*detail::get_context_base());
+        }
+
+        template<typename T>
+        inline
+        value<T> declare(const value<T>& v1, const std::string& name = "")
+        {
+            return declare(*detail::get_context_base(), v1, name);
+        }
+
+        template<typename T, int N>
+        inline
+        tensor<value<T>, N> declare(const tensor<value<T>, N>& v1)
+        {
+            return declare(*detail::get_context_base(), v1);
+        }
+
+        template<typename T>
+        inline
+        value_mut<T> declare_mut(const value<T>& v1, const std::string& name = "")
+        {
+            return declare_mut(*detail::get_context_base(), v1, name);
+        }
+
+        template<typename T, int N>
+        inline
+        tensor<value_mut<T>, N> declare_mut(const tensor<value<T>, N>& v1)
+        {
+            return declare_mut(*detail::get_context_base(), v1);
+        }
     }
 
     ///select
@@ -2605,7 +3075,7 @@ namespace dual_types
     {
         if(name == "")
         {
-            int id = executor.sequenced.size();
+            int id = executor.get_id();
 
             std::string fname = "declared" + std::to_string(id);
             return declare_array<T, N...>(executor, fname);
@@ -2624,7 +3094,7 @@ namespace dual_types
     {
         if(name == "")
         {
-            int id = executor.sequenced.size();
+            int id = executor.get_id();
 
             std::string fname = "declared" + std::to_string(id);
             return declare_impl(executor, v1, fname, is_mutable);
@@ -2634,7 +3104,7 @@ namespace dual_types
 
         declare_op.is_mutable = is_mutable;
 
-        executor.exec(declare_op);
+        executor.exec(declare_op.as_generic());
 
         value<T> result = name;
         result.is_mutable = declare_op.is_mutable;
@@ -2854,6 +3324,8 @@ T divide_with_callback(const T& top, const T& bottom, U&& if_nonfinite)
 using dual = dual_types::dual_v<dual_types::value<float>>;
 using dual_complex = dual_types::dual_v<dual_types::complex_v<dual_types::value<float>>>;
 
+using namespace dual_types::cf;
+
 template<typename T>
 using value_base = dual_types::value<T>;
 using value = dual_types::value<float>;
@@ -2863,7 +3335,6 @@ using value_us = dual_types::value<unsigned short>;
 using value_v = dual_types::value<std::monostate>;
 using value_h = dual_types::value<float16>;
 
-
 template<typename T>
 using value_base_mut = dual_types::value_mut<T>;
 using value_mut = dual_types::value_mut<float>;
@@ -2872,9 +3343,6 @@ using value_s_mut = dual_types::value_mut<short>;
 using value_us_mut = dual_types::value_mut<unsigned short>;
 using value_v_mut = dual_types::value_mut<std::monostate>;
 using value_h_mut = dual_types::value_mut<float16>;
-
-const inline auto return_s = dual_types::make_return_s();
-const inline auto break_s = dual_types::make_break_s();
 
 using v4f = tensor<value, 4>;
 using v4i = tensor<value_i, 4>;

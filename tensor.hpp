@@ -591,6 +591,14 @@ namespace tensor_impl
             return {idx(0), idx(1), idx(2)};
         }
 
+        tensor<T, 3> yzw() const
+        {
+            static_assert(sizeof...(N) == 1);
+            static_assert(((N >= 4) && ...));
+
+            return {idx(1), idx(2), idx(3)};
+        }
+
         T squared_length() const
         {
             static_assert(sizeof...(N) == 1);
