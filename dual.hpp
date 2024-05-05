@@ -31,12 +31,11 @@ namespace dual_types
     template<typename T>
     struct dual_v
     {
-        static constexpr bool is_dual = true;
-
         T real = T();
         T dual = T();
 
         dual_v(){}
+
         dual_v(const T& _real, const T& _dual)
         {
             real = _real;
@@ -557,52 +556,7 @@ namespace dual_types
     }
 };
 
-inline
-std::string pad(std::string in, int len)
-{
-    in.resize(len, ' ');
-
-    return in;
-}
-
 //using dual = dual_v<symbol>;
 //using dual_complex = dual_v<complex<symbol>>;
-
-template<typename T, typename U, size_t N, size_t... Is>
-inline
-auto array_apply(T&& func, const std::array<U, N>& arr, std::index_sequence<Is...>)
-{
-    return func(arr[Is]...);
-}
-
-template<typename T, typename U, size_t N>
-inline
-auto array_apply(T&& func, const std::array<U, N>& arr)
-{
-    return array_apply(std::forward<T>(func), arr, std::make_index_sequence<N>{});
-}
-
-template<typename R, typename... T>
-inline
-auto get_function_args_array(R(T...))
-{
-    return std::array{T()...};
-}
-
-template<typename R, typename... T>
-constexpr
-bool is_dual_impl(R(T...))
-{
-    return (T::is_dual && ...);
-}
-
-template<typename F>
-constexpr
-bool is_dual()
-{
-    constexpr std::decay_t<F> f = std::decay_t<F>();
-
-    return is_dual_impl(f);
-}
 
 #endif // DUAL_HPP_INCLUDED

@@ -681,7 +681,6 @@ namespace dual_types
     {
         using value_type = T;
         using is_complex = std::false_type;
-        static constexpr bool is_dual = false;
 
         ops::type_t type = ops::NONE;
 
@@ -1446,11 +1445,11 @@ namespace dual_types
 
                 if(value_payload.value().index() == 0 && std::get<0>(value_payload.value()) == sym)
                 {
-                    ret.make_variable(*this);
+                    ret = dual_types::dual_v<value<T>>(*this, 1.f);
                 }
                 else
                 {
-                    ret.make_constant(*this);
+                    ret = dual_types::dual_v<value<T>>(*this, 0.f);
                 }
 
                 return ret;
