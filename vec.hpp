@@ -387,7 +387,7 @@ struct vec
         return ret;
     }
 
-    inline
+    constexpr
     T squared_length() const
     {
         T sqsum = 0;
@@ -400,7 +400,7 @@ struct vec
         return sqsum;
     }
 
-    inline
+    constexpr
     T length() const
     {
         using namespace std;
@@ -412,7 +412,6 @@ struct vec
         return val;
     }
 
-    inline
     float lengthf() const
     {
         T l = squared_length();
@@ -422,6 +421,7 @@ struct vec
         return val;
     }
 
+    constexpr
     double length_d() const
     {
         double l = 0;
@@ -434,6 +434,7 @@ struct vec
         return sqrt(l);
     }
 
+    constexpr
     T sum() const
     {
         T accum = 0;
@@ -446,6 +447,7 @@ struct vec
         return accum;
     }
 
+    constexpr
     T sum_absolute() const
     {
         T accum = 0;
@@ -458,6 +460,7 @@ struct vec
         return accum;
     }
 
+    constexpr
     T max_elem() const
     {
         T val = -FLT_MAX;
@@ -471,6 +474,7 @@ struct vec
         return val;
     }
 
+    constexpr
     T min_elem() const
     {
         T val = FLT_MAX;
@@ -484,6 +488,7 @@ struct vec
         return val;
     }
 
+    constexpr
     int which_element_minimum() const
     {
         float val = FLT_MAX;
@@ -501,6 +506,7 @@ struct vec
         return num;
     }
 
+    constexpr
     float largest_elem() const
     {
         float val = -1;
@@ -700,7 +706,7 @@ struct vec
         return rot;
     }*/
 
-    explicit operator T() const
+    explicit constexpr operator T() const
     {
         static_assert(N == 1, "Implicit T can conversion only be used on vec<1,T> types");
 
@@ -742,14 +748,14 @@ namespace complex_type
         T real = T();
         T imaginary = T();
 
-        complex(){}
+        constexpr complex(){}
         template<typename U, typename V>
         requires std::is_constructible_v<T, U> && std::is_constructible_v<T, V>
-        complex(U v1, V v2) : real(std::move(v1)), imaginary(std::move(v2)) {}
+        constexpr complex(U v1, V v2) : real(std::move(v1)), imaginary(std::move(v2)) {}
         template<typename U>
         requires std::is_constructible_v<T, U>
-        complex(U v1) : real(std::move(v1)), imaginary(0) {}
-        complex(unit_i_t) : real(0), imaginary(1){}
+        constexpr complex(U v1) : real(std::move(v1)), imaginary(0) {}
+        constexpr complex(unit_i_t) : real(0), imaginary(1){}
 
         friend constexpr
         complex<T> operator+(const complex<T>& c1, const complex<T>& c2)
