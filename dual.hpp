@@ -162,12 +162,11 @@ namespace dual_types
         return dual_v<T>(T(v), T()) * d1;
     }
 
-
     template<typename T>
     inline
     dual_v<T> operator/(const dual_v<T>& d1, const dual_v<T>& d2)
     {
-        return dual_v<T>(d1.real / d2.real, ((d1.dual * d2.real - d1.real * d2.dual) / (d2.real * d2.real)));
+        return dual_v<T>(d1.real / d2.real, (d1.dual - d1.real * d2.dual / d2.real) / d2.real);
     }
 
     template<typename T, typename U>
