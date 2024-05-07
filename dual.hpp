@@ -212,7 +212,7 @@ namespace dual_types
     inline
     dual_v<T> pow(const dual_v<T>& d1, const dual_v<T>& d2)
     {
-        return dual_v<T>(pow(d1.real, d2.real), pow(d1.real, d2.real) * (d1.dual * (d2.real / d1.real) + d2.dual * log(d1.real)));
+        return dual_v<T>(pow(d1.real, d2.real), pow(d1.real, d2.real - 1) * d2.real * d1.dual + pow(d1.real, d2.real - 1) * d1.real * log(d1.real) * d2.dual);
     }
 
     template<typename T, typename U>
