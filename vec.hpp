@@ -387,7 +387,7 @@ struct vec
         return ret;
     }
 
-    inline
+    constexpr
     T squared_length() const
     {
         T sqsum = 0;
@@ -400,7 +400,7 @@ struct vec
         return sqsum;
     }
 
-    inline
+    constexpr
     T length() const
     {
         using namespace std;
@@ -412,7 +412,6 @@ struct vec
         return val;
     }
 
-    inline
     float lengthf() const
     {
         T l = squared_length();
@@ -422,6 +421,7 @@ struct vec
         return val;
     }
 
+    constexpr
     double length_d() const
     {
         double l = 0;
@@ -434,6 +434,7 @@ struct vec
         return sqrt(l);
     }
 
+    constexpr
     T sum() const
     {
         T accum = 0;
@@ -446,6 +447,7 @@ struct vec
         return accum;
     }
 
+    constexpr
     T sum_absolute() const
     {
         T accum = 0;
@@ -458,6 +460,7 @@ struct vec
         return accum;
     }
 
+    constexpr
     T max_elem() const
     {
         T val = -FLT_MAX;
@@ -471,6 +474,7 @@ struct vec
         return val;
     }
 
+    constexpr
     T min_elem() const
     {
         T val = FLT_MAX;
@@ -484,6 +488,7 @@ struct vec
         return val;
     }
 
+    constexpr
     int which_element_minimum() const
     {
         float val = FLT_MAX;
@@ -501,6 +506,7 @@ struct vec
         return num;
     }
 
+    constexpr
     float largest_elem() const
     {
         float val = -1;
@@ -700,7 +706,7 @@ struct vec
         return rot;
     }*/
 
-    explicit operator T() const
+    explicit constexpr operator T() const
     {
         static_assert(N == 1, "Implicit T can conversion only be used on vec<1,T> types");
 
@@ -737,36 +743,35 @@ namespace complex_type
     struct complex
     {
         using is_complex = std::true_type;
-        using underlying_type = T;
+        using value_type = T;
 
         T real = T();
         T imaginary = T();
 
-        complex(){}
-        complex(const std::string& v1, const std::string& v2) : real(v1), imaginary(v2) {}
+        constexpr complex(){}
         template<typename U, typename V>
         requires std::is_constructible_v<T, U> && std::is_constructible_v<T, V>
-        complex(U v1, V v2) : real(v1), imaginary(v2) {}
+        constexpr complex(U v1, V v2) : real(std::move(v1)), imaginary(std::move(v2)) {}
         template<typename U>
         requires std::is_constructible_v<T, U>
-        complex(U v1) : real(v1), imaginary(0) {}
-        complex(unit_i_t) : real(0), imaginary(1){}
+        constexpr complex(U v1) : real(std::move(v1)), imaginary(0) {}
+        constexpr complex(unit_i_t) : real(0), imaginary(1){}
 
-        friend inline
+        friend constexpr
         complex<T> operator+(const complex<T>& c1, const complex<T>& c2)
         {
             return complex<T>(c1.real + c2.real, c1.imaginary + c2.imaginary);
         }
 
         template<typename U>
-        friend inline
+        friend constexpr
         complex<T> operator+(const complex<T>& c1, const U& c2)
         {
             return c1 + complex<T>(c2, 0.f);
         }
 
-        template< typename U>
-        friend inline
+        template<typename U>
+        friend constexpr
         complex<T> operator+(const U& c1, const complex<T>& c2)
         {
             return complex<T>(c1, 0.f) + c2;
@@ -778,39 +783,39 @@ namespace complex_type
             d1 = d1 + d2;
         }
 
-        friend inline
+        friend constexpr
         complex<T> operator-(const complex<T>& c1, const complex<T>& c2)
         {
             return complex<T>(c1.real - c2.real, c1.imaginary - c2.imaginary);
         }
 
-        friend inline
+        friend constexpr
         complex<T> operator-(const complex<T>& c1)
         {
             return complex<T>(-c1.real, -c1.imaginary);
         }
 
-        friend inline
+        friend constexpr
         complex<T> operator*(const complex<T>& c1, const complex<T>& c2)
         {
             return complex<T>(c1.real * c2.real - c1.imaginary * c2.imaginary, c1.imaginary * c2.real + c1.real * c2.imaginary);
         }
 
         template<typename U>
-        friend inline
+        friend constexpr
         complex<T> operator*(const complex<T>& c1, const U& c2)
         {
             return c1 * complex<T>(c2, 0.f);
         }
 
         template<typename U>
-        friend inline
+        friend constexpr
         complex<T> operator*(const U& c1, const complex<T>& c2)
         {
             return complex<T>(c1, 0.f) * c2;
         }
 
-        friend inline
+        friend constexpr
         complex<T> operator/(const complex<T>& c1, const complex<T>& c2)
         {
             T divisor = c2.real * c2.real + c2.imaginary * c2.imaginary;
@@ -834,7 +839,7 @@ namespace complex_type
     }
 
     template<typename T>
-    inline
+    constexpr
     complex<T> conjugate(const complex<T>& c1)
     {
         return complex<T>(c1.real, -c1.imaginary);
@@ -855,28 +860,28 @@ namespace complex_type
     }
 
     template<typename T>
-    inline
+    constexpr
     T Imaginary(const complex<T>& c1)
     {
         return c1.imaginary;
     }
 
     template<typename T>
-    inline
+    constexpr
     T Real(const complex<T>& c1)
     {
         return c1.real;
     }
 
     template<typename T>
-    inline
+    constexpr
     T& Imaginary(complex<T>& c1)
     {
         return c1.imaginary;
     }
 
     template<typename T>
-    inline
+    constexpr
     T& Real(complex<T>& c1)
     {
         return c1.real;
@@ -893,7 +898,7 @@ namespace complex_type
     }
 
     template<typename T>
-    inline
+    constexpr
     complex<T> pow(const complex<T>& d1, int exponent)
     {
         complex<T> ret = d1;
