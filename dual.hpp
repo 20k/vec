@@ -29,6 +29,12 @@ namespace dual_types
     }
 
     template<typename T>
+    struct dual_v;
+
+    template<typename T, typename U>
+    concept DualValue = std::is_constructible_v<dual_v<T>, U>;
+
+    template<typename T>
     struct dual_v
     {
         T real = T();
@@ -67,122 +73,144 @@ namespace dual_types
             real = val;
             dual.set_dual_variable();
         }
-    };
 
-    template<typename T, typename U>
-    concept DualValue = std::is_constructible_v<dual_v<T>, U>;
+
+        friend
+        dual_v<T> operator+(const dual_v<T>& d1, const dual_v<T>& d2)
+        {
+            return dual_v<T>(d1.real + d2.real, d1.dual + d2.dual);
+        }
+
+        template<typename U>
+        requires DualValue<T, U>
+        friend
+        dual_v<T> operator+(const dual_v<T>& d1, const U& v)
+        {
+            return dual_v<T>(d1.real + T(v), d1.dual);
+        }
+
+        template<typename U>
+        requires DualValue<T, U>
+        friend
+        dual_v<T> operator+(const U& v, const dual_v<T>& d1)
+        {
+            return dual_v<T>(T(v) + d1.real, d1.dual);
+        }
+
+        friend
+        void operator+=(dual_v<T>& d1, const dual_v<T>& d2)
+        {
+            d1 = d1 + d2;
+        }
+
+        friend
+        dual_v<T> operator-(const dual_v<T>& d1, const dual_v<T>& d2)
+        {
+            return dual_v<T>(d1.real - d2.real, d1.dual - d2.dual);
+        }
+
+        template<typename U>
+        requires DualValue<T, U>
+        friend
+        dual_v<T> operator-(const dual_v<T>& d1, const U& v)
+        {
+            return dual_v<T>(d1.real - T(v), d1.dual);
+        }
+
+        template<typename U>
+        requires DualValue<T, U>
+        friend
+        dual_v<T> operator-(const U& v, const dual_v<T>& d1)
+        {
+            return dual_v<T>(T(v) - d1.real, -d1.dual);
+        }
+
+        friend
+        dual_v<T> operator-(const dual_v<T>& d1)
+        {
+            return dual_v<T>(-d1.real, -d1.dual);
+        }
+
+        friend
+        dual_v<T> operator*(const dual_v<T>& d1, const dual_v<T>& d2)
+        {
+            return dual_v<T>(d1.real * d2.real, d1.real * d2.dual + d2.real * d1.dual);
+        }
+
+        template<typename U>
+        requires DualValue<T, U>
+        friend
+        dual_v<T> operator*(const dual_v<T>& d1, const U& v)
+        {
+            return d1 * dual_v<T>(T(v), T());
+        }
+
+        template<typename U>
+        requires DualValue<T, U>
+        friend
+        dual_v<T> operator*(const U& v, const dual_v<T>& d1)
+        {
+            return dual_v<T>(T(v), T()) * d1;
+        }
+
+        friend
+        dual_v<T> operator/(const dual_v<T>& d1, const dual_v<T>& d2)
+        {
+            return dual_v<T>(d1.real / d2.real, (d1.dual - d1.real * d2.dual / d2.real) / d2.real);
+        }
+
+        template<typename U>
+        requires DualValue<T, U>
+        friend
+        dual_v<T> operator/(const dual_v<T>& d1, const U& v)
+        {
+            return d1 / dual_v<T>(T(v), T());
+        }
+
+        template<typename U>
+        requires DualValue<T, U>
+        friend
+        dual_v<T> operator/(const U& v, const dual_v<T>& d1)
+        {
+            return dual_v<T>(T(v), T()) / d1;
+        }
+
+        friend
+        T operator<(const dual_v<T>& d1, const dual_v<T>& d2)
+        {
+            return d1.real < d2.real;
+        }
+
+        friend
+        T operator<=(const dual_v<T>& d1, const dual_v<T>& d2)
+        {
+            return d1.real <= d2.real;
+        }
+
+        friend
+        T operator>(const dual_v<T>& d1, const dual_v<T>& d2)
+        {
+            return d1.real > d2.real;
+        }
+
+        friend
+        T operator>=(const dual_v<T>& d1, const dual_v<T>& d2)
+        {
+            return d1.real >= d2.real;
+        }
+
+        friend
+        T operator==(const dual_v<T>& d1, const dual_v<T>& d2)
+        {
+            return d1.real == d2.real;
+        }
+    };
 
     template<typename T>
     inline
     complex_v<T> makefinite(const complex_v<T>& c1)
     {
         return complex_v<T>(makefinite(c1.real), makefinite(c1.imaginary));
-    }
-
-    template<typename T>
-    inline
-    dual_v<T> operator+(const dual_v<T>& d1, const dual_v<T>& d2)
-    {
-        return dual_v<T>(d1.real + d2.real, d1.dual + d2.dual);
-    }
-
-    template<typename T, typename U>
-    requires DualValue<T, U>
-    inline
-    dual_v<T> operator+(const dual_v<T>& d1, const U& v)
-    {
-        return dual_v<T>(d1.real + T(v), d1.dual);
-    }
-
-    template<typename T, typename U>
-    requires DualValue<T, U>
-    inline
-    dual_v<T> operator+(const U& v, const dual_v<T>& d1)
-    {
-        return dual_v<T>(T(v) + d1.real, d1.dual);
-    }
-
-    template<typename T>
-    inline
-    void operator+=(dual_v<T>& d1, const dual_v<T>& d2)
-    {
-        d1 = d1 + d2;
-    }
-
-    template<typename T>
-    inline
-    dual_v<T> operator-(const dual_v<T>& d1, const dual_v<T>& d2)
-    {
-        return dual_v<T>(d1.real - d2.real, d1.dual - d2.dual);
-    }
-
-    template<typename T, typename U>
-    requires DualValue<T, U>
-    inline
-    dual_v<T> operator-(const dual_v<T>& d1, const U& v)
-    {
-        return dual_v<T>(d1.real - T(v), d1.dual);
-    }
-
-    template<typename T, typename U>
-    requires DualValue<T, U>
-    inline
-    dual_v<T> operator-(const U& v, const dual_v<T>& d1)
-    {
-        return dual_v<T>(T(v) - d1.real, -d1.dual);
-    }
-
-    template<typename T>
-    inline
-    dual_v<T> operator-(const dual_v<T>& d1)
-    {
-        return dual_v<T>(-d1.real, -d1.dual);
-    }
-
-    template<typename T>
-    inline
-    dual_v<T> operator*(const dual_v<T>& d1, const dual_v<T>& d2)
-    {
-        return dual_v<T>(d1.real * d2.real, d1.real * d2.dual + d2.real * d1.dual);
-    }
-
-    template<typename T, typename U>
-    requires DualValue<T, U>
-    inline
-    dual_v<T> operator*(const dual_v<T>& d1, const U& v)
-    {
-        return d1 * dual_v<T>(T(v), T());
-    }
-
-    template<typename T, typename U>
-    requires DualValue<T, U>
-    inline
-    dual_v<T> operator*(const U& v, const dual_v<T>& d1)
-    {
-        return dual_v<T>(T(v), T()) * d1;
-    }
-
-    template<typename T>
-    inline
-    dual_v<T> operator/(const dual_v<T>& d1, const dual_v<T>& d2)
-    {
-        return dual_v<T>(d1.real / d2.real, (d1.dual - d1.real * d2.dual / d2.real) / d2.real);
-    }
-
-    template<typename T, typename U>
-    requires DualValue<T, U>
-    inline
-    dual_v<T> operator/(const dual_v<T>& d1, const U& v)
-    {
-        return d1 / dual_v<T>(T(v), T());
-    }
-
-    template<typename T, typename U>
-    requires DualValue<T, U>
-    inline
-    dual_v<T> operator/(const U& v, const dual_v<T>& d1)
-    {
-        return dual_v<T>(T(v), T()) / d1;
     }
 
     template<typename T>
@@ -243,7 +271,7 @@ namespace dual_types
     inline
     dual_v<T> fabs(const dual_v<T>& d1)
     {
-        return dual_v<T>(fabs(d1.real), d1.real * d1.dual / fabs(d1.real));
+        return dual_v<T>(fabs(d1.real), sign(d1.real) * d1.dual);
     }
 
     ///https://math.stackexchange.com/questions/2352341/the-derivative-of-absolute-value-of-complex-function-fx-z-where-x-in-math
@@ -440,41 +468,6 @@ namespace dual_types
     auto dual_if(const T& condition, U&& if_true, V&& if_false)
     {
         return select(if_false(), if_true(), condition);
-    }
-
-    template<typename T>
-    inline
-    T operator<(const dual_v<T>& d1, const dual_v<T>& d2)
-    {
-        return d1.real < d2.real;
-    }
-
-    template<typename T>
-    inline
-    T operator<=(const dual_v<T>& d1, const dual_v<T>& d2)
-    {
-        return d1.real <= d2.real;
-    }
-
-    template<typename T>
-    inline
-    T operator>(const dual_v<T>& d1, const dual_v<T>& d2)
-    {
-        return d1.real > d2.real;
-    }
-
-    template<typename T>
-    inline
-    T operator>=(const dual_v<T>& d1, const dual_v<T>& d2)
-    {
-        return d1.real >= d2.real;
-    }
-
-    template<typename T>
-    inline
-    T operator==(const dual_v<T>& d1, const dual_v<T>& d2)
-    {
-        return d1.real == d2.real;
     }
 
     template<typename T>
