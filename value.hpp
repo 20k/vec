@@ -1783,12 +1783,6 @@ namespace dual_types
             assert(false);
         }
 
-        /*template<typename U>
-        value<T> bracket(const value<U>& idx)
-        {
-            return make_op<T>(ops::BRACKET, *this, idx.template reinterpret_as<value<T>>());
-        }*/
-
         value<T>& operator+=(const value<T>& d1)
         {
             *this = *this + d1;
