@@ -619,36 +619,6 @@ namespace dual_types
         return pending.at(0);
     }
 
-    struct type_erased_storage
-    {
-        std::variant<std::monostate,
-                     float16, float, double,
-                     int64_t, uint64_t,
-                     int, unsigned int,
-                     uint16_t, int16_t,
-                     uint8_t, int8_t> storage;
-
-        template<typename T>
-        auto visit(T&& t)
-        {
-            return std::visit(std::forward<T>(t), storage);
-        }
-
-        template<typename T>
-        constexpr type_erased_storage(const T& in) : storage(in){}
-        constexpr type_erased_storage(const type_erased_storage&) = default;
-
-        template<typename T>
-        void operator=(const T& other)
-        {
-            storage = other;
-        }
-
-        type_erased_storage& operator=(const type_erased_storage&) = default;
-
-        auto operator<=>(const type_erased_storage& rhs) const = default;
-    };
-
     template<typename T, typename U>
     struct mutable_value
     {
@@ -676,36 +646,46 @@ namespace dual_types
         }
     };
 
-    template<typename T>
-    struct value
+    struct value_generic
     {
-        using value_type = T;
-        using is_complex = std::false_type;
-        static constexpr bool is_dual = false;
-
         ops::type_t type = ops::NONE;
 
-        std::optional<std::variant<std::string, type_erased_storage>> value_payload;
+        std::variant<std::string, std::monostate,
+                     float16, float, double,
+                     int64_t, uint64_t,
+                     int, unsigned int,
+                     uint16_t, int16_t,
+                     uint8_t, int8_t>  value_payload;
 
-        //std::optional<std::string> value_payload;
+
+        std::string original_type;
+        bool is_mutable = false;
+        using is_complex = std::false_type;
+    };
+
+    template<typename T>
+    struct value : value_generic
+    {
+        using value_type = T;
+
         std::vector<value<T>> args;
 
-        std::string original_type = name_type(T());
-        bool is_mutable = false;
-
-        value(){value_payload = T{}; type = ops::VALUE;}
-        //value(T v){value_payload = v; type = ops::VALUE;}
-        //value(int v){value_payload = T(v); type = ops::VALUE;}
+        value()
+        {
+            value_payload = T{}; type = ops::VALUE;
+            original_type = name_type(T());
+        }
 
         template<typename U>
         requires std::is_arithmetic_v<U>
         value(U u)
         {
             value_payload = static_cast<T>(u); type = ops::VALUE;
+            original_type = name_type(T());
         }
 
-        value(const std::string& str){value_payload = str; type = ops::VALUE;}
-        value(const char* str){assert(str); value_payload = std::string(str); type = ops::VALUE;}
+        value(const std::string& str){value_payload = str; type = ops::VALUE;original_type = name_type(T());}
+        value(const char* str){assert(str); value_payload = std::string(str); type = ops::VALUE;original_type = name_type(T());}
 
         void set_from(const std::variant<std::string, T>& val)
         {
@@ -725,14 +705,9 @@ namespace dual_types
         {
             U result;
             result.type = type;
-            result.value_payload = std::nullopt;
             result.original_type = original_type;
             result.is_mutable = is_mutable;
-
-            if(value_payload.has_value())
-            {
-                result.value_payload = value_payload;
-            }
+            result.value_payload = value_payload;
 
             for(const value& v : args)
             {
@@ -766,14 +741,9 @@ namespace dual_types
             {
                 value<std::monostate> result;
                 result.type = type;
-                result.value_payload = std::nullopt;
                 result.original_type = original_type;
                 result.is_mutable = is_mutable;
-
-                if(value_payload.has_value())
-                {
-                    result.value_payload = value_payload;
-                }
+                result.value_payload = value_payload;
 
                 for(const value<T>& v : args)
                 {
@@ -797,7 +767,7 @@ namespace dual_types
 
         bool is_constant() const
         {
-            return is_value() && value_payload.has_value() && value_payload.value().index() == 1;
+            return is_value() && value_payload.index() != 0;
         }
 
         template<typename U>
@@ -808,7 +778,7 @@ namespace dual_types
 
             auto wrapper_func = [&]<typename V>(const V& in)
             {
-                if constexpr(std::is_same_v<V, std::monostate>)
+                if constexpr(std::is_same_v<V, std::monostate> || std::is_same_v<V, std::string>)
                 {
                     assert(false);
                     return false;
@@ -824,12 +794,12 @@ namespace dual_types
         {
             assert(is_constant());
 
-            return std::get<T>(std::get<1>(value_payload.value()).storage);
+            return std::get<T>(value_payload);
         }
 
         T get(int idx) const
         {
-            return std::get<T>(std::get<1>(args[idx].value_payload.value()).storage);
+            return std::get<T>(args[idx].value_payload);
         }
 
         template<typename Func>
@@ -837,7 +807,7 @@ namespace dual_types
         {
             assert(is_constant());
 
-            return std::visit(std::forward<Func>(f), std::get<1>(value_payload.value()).storage);
+            return std::visit(std::forward<Func>(f), value_payload);
         }
 
         void make_value(const std::string& str)
@@ -1444,7 +1414,7 @@ namespace dual_types
             {
                 dual_types::dual_v<value<T>> ret;
 
-                if(value_payload.value().index() == 0 && std::get<0>(value_payload.value()) == sym)
+                if(value_payload.index() == 0 && std::get<0>(value_payload) == sym)
                 {
                     ret.make_variable(*this);
                 }
@@ -1572,7 +1542,7 @@ namespace dual_types
 
         void substitute_impl(const std::string& sym, T value)
         {
-            if(type == ops::VALUE && value_payload.value().index() == 0 && std::get<0>(value_payload.value()) == sym)
+            if(type == ops::VALUE && value_payload.index() == 0 && std::get<0>(value_payload) == sym)
             {
                 value_payload = double{value};
                 return;
@@ -1601,38 +1571,6 @@ namespace dual_types
             return cp;
         }
 
-        /*template<typename U>
-        void recurse_variables(U&& u)
-        {
-            if(type == ops::IDOT)
-                return;
-
-            if(type == ops::VALUE)
-            {
-                if(is_constant())
-                    return;
-
-                u(*this);
-                return;
-            }
-
-            int start = 0;
-
-            if(type == ops::UNKNOWN_FUNCTION)
-                start = 1;
-
-            if(type == ops::DECLARE)
-                start = 2;
-
-            for(int i=start; i < (int)args.size(); i++)
-            {
-                if(type == ops::CONVERT && i == 1)
-                    continue;
-
-                args[i].recurse_variables(std::forward<U>(u));
-            }
-        }*/
-
         void get_all_variables_impl(std::set<std::string>& v) const
         {
             if(type == ops::VALUE)
@@ -1640,7 +1578,7 @@ namespace dual_types
                 if(is_constant())
                     return;
 
-                v.insert(std::get<0>(value_payload.value()));
+                v.insert(std::get<0>(value_payload));
                 return;
             }
 
@@ -1748,46 +1686,6 @@ namespace dual_types
             });
         }
 
-        /*template<typename Pre, typename U>
-        void bottom_up_recurse(Pre&& pre, U&& in) const
-        {
-            if(pre(*this))
-                return;
-
-            for(const auto& i : args)
-            {
-                i.bottom_up_recurse(std::forward<Pre>(pre), std::forward<U>(in));
-            }
-
-            in(*this);
-        }*/
-
-        /*template<typename Pre, typename U>
-        void bottom_up_recurse(Pre&& pre, U&& in)
-        {
-            if(pre(*this))
-                return;
-
-            for(auto& i : args)
-            {
-                i.bottom_up_recurse(std::forward<Pre>(pre), std::forward<U>(in));
-            }
-
-            in(*this);
-        }*/
-
-        template<typename U>
-        void recurse_lambda(U&& func) const
-        {
-            func(*this, std::forward<U>(func));
-        }
-
-        template<typename U>
-        void recurse_lambda(U&& func)
-        {
-            func(*this, std::forward<U>(func));
-        }
-
         void substitute(const std::map<std::string, std::string>& variables)
         {
             if(type == ops::VALUE)
@@ -1795,7 +1693,7 @@ namespace dual_types
                 if(is_constant())
                     return;
 
-                auto it = variables.find(std::get<0>(value_payload.value()));
+                auto it = variables.find(std::get<0>(value_payload));
 
                 if(it == variables.end())
                     return;
@@ -2213,7 +2111,7 @@ namespace dual_types
                         return v1 == v2;
                 };
 
-                return std::visit(comparator, std::get<1>(d1.value_payload.value()).storage, std::get<1>(d2.value_payload.value()).storage);
+                return std::visit(comparator, d1.value_payload, d2.value_payload);
             }
 
             if(d1.original_type != d2.original_type)
@@ -2286,13 +2184,17 @@ namespace dual_types
         ///the type system is becoming really not ideal, if we promote a half to a float, we have no way of detecting that. Relying on stringyness
         if(op.type == ops::VALUE)
         {
-            if(op.value_payload.value().index() == 0)
-                return std::get<0>(op.value_payload.value());
-
-            const type_erased_storage& store = std::get<1>(op.value_payload.value());
+            if(op.value_payload.index() == 0)
+                return std::get<0>(op.value_payload);
 
             return std::visit([]<typename T>(const T& in)
             {
+                if constexpr(std::is_same_v<T, std::string>)
+                {
+                    assert(false);
+                    return std::string();
+                }
+
                 std::string suffix;
 
                 if constexpr(std::is_same_v<T, float16>)
@@ -2300,7 +2202,7 @@ namespace dual_types
                 if constexpr(std::is_same_v<T, float>)
                     suffix = "f";
 
-                if constexpr(!std::is_same_v<T, std::monostate>)
+                if constexpr(!std::is_same_v<T, std::monostate> && !std::is_same_v<T, std::string>)
                 {
                     if(in < 0)
                         return "(" + to_string_s(in) + suffix + ")";
@@ -2310,7 +2212,7 @@ namespace dual_types
 
                 assert(false);
                 return std::string();
-            }, store.storage);
+            }, op.value_payload);
         }
 
         if(op.type == ops::BRACKET)
@@ -2541,7 +2443,6 @@ namespace dual_types
         value<U> val;
         val.type = type;
         val.args = {create_as<U>(std::forward<T>(args))...};
-        val.value_payload = std::nullopt;
 
         if constexpr(std::is_same_v<U, std::monostate>)
             return val;
@@ -2558,7 +2459,6 @@ namespace dual_types
         value<T> val;
         val.type = type;
         val.args = args;
-        val.value_payload = std::nullopt;
 
         if constexpr(std::is_same_v<T, std::monostate>)
             return val;
