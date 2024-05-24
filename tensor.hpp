@@ -157,7 +157,7 @@ namespace tensor_impl
             invOut[i] = inv[i] * det;
     }*/
 
-    template<template<typename T, int... N> typename Concrete, typename T, int... N>
+    template<typename T, int... N>
     struct tensor_base;
 
     template<typename T, int... N>
@@ -167,9 +167,9 @@ namespace tensor_impl
     inline
     auto tensor_for_each_binary(V1&& v1, V2&& v2, Func&& u);
 
-    template<template<typename T, int... N> typename Concrete, typename U, typename T, int... N>
+    template<typename T, typename U>
     inline
-    auto tensor_for_each_unary(const Concrete<T, N...>& v, U&& u);
+    auto tensor_for_each_unary(const T& v, U&& u);
 
     ///https://pharr.org/matt/blog/2019/11/03/difference-of-floats
     ///a * b - c * d
@@ -204,25 +204,14 @@ namespace tensor_impl
     };
 
     ///todo: use deducing this to make this a lot simpler
-    template<template<typename T, int... N> typename Concrete, typename T, int... N>
+    template<typename T, int... N>
     struct tensor_base
     {
-        template<typename U, int... M>
-        using concrete_t = Concrete<U, M...>;
-
-        template<typename U>
-        using concrete_with_length_t = Concrete<U, N...>;
-
         using value_type = T;
 
         static inline constexpr int dimensions = sizeof...(N);
 
         md_array<T, N...> data{};
-
-        Concrete<T, N...> to_concrete() const
-        {
-            return *this;
-        }
 
         /*constexpr int dimensions() const
         {
@@ -345,22 +334,23 @@ namespace tensor_impl
             return a11 * difference_of_products(a22, a33, a32, a23) + a12 * difference_of_products(a23, a31, a21, a33) + a13 * difference_of_products(a21, a32, a22, a31);
         }
 
-        Concrete<T, N...> symmetric_unit_invert() const
+        template<typename Self>
+        Self symmetric_unit_invert(this const Self& self)
         {
             assert(sizeof...(N) == 2);
             assert(((N == 3) && ...));
 
-            Concrete<T, N...> ret;
+            Self ret;
 
-            ret[0, 0] = difference_of_products(idx(1, 1), idx(2, 2), idx(2, 1), idx(1, 2));
-            ret[0, 1] = difference_of_products(idx(0, 2), idx(2, 1), idx(0, 1), idx(2, 2));
-            ret[0, 2] = difference_of_products(idx(0, 1), idx(1, 2), idx(0, 2), idx(1, 1));
-            ret[1, 0] = difference_of_products(idx(1, 2), idx(2, 0), idx(1, 0), idx(2, 2));
-            ret[1, 1] = difference_of_products(idx(0, 0), idx(2, 2), idx(0, 2), idx(2, 0));
-            ret[1, 2] = difference_of_products(idx(1, 0), idx(0, 2), idx(0, 0), idx(1, 2));
-            ret[2, 0] = difference_of_products(idx(1, 0), idx(2, 1), idx(2, 0), idx(1, 1));
-            ret[2, 1] = difference_of_products(idx(2, 0), idx(0, 1), idx(0, 0), idx(2, 1));
-            ret[2, 2] = difference_of_products(idx(0, 0), idx(1, 1), idx(1, 0), idx(0, 1));
+            ret[0, 0] = difference_of_products(self.idx(1, 1), self.idx(2, 2), self.idx(2, 1), self.idx(1, 2));
+            ret[0, 1] = difference_of_products(self.idx(0, 2), self.idx(2, 1), self.idx(0, 1), self.idx(2, 2));
+            ret[0, 2] = difference_of_products(self.idx(0, 1), self.idx(1, 2), self.idx(0, 2), self.idx(1, 1));
+            ret[1, 0] = difference_of_products(self.idx(1, 2), self.idx(2, 0), self.idx(1, 0), self.idx(2, 2));
+            ret[1, 1] = difference_of_products(self.idx(0, 0), self.idx(2, 2), self.idx(0, 2), self.idx(2, 0));
+            ret[1, 2] = difference_of_products(self.idx(1, 0), self.idx(0, 2), self.idx(0, 0), self.idx(1, 2));
+            ret[2, 0] = difference_of_products(self.idx(1, 0), self.idx(2, 1), self.idx(2, 0), self.idx(1, 1));
+            ret[2, 1] = difference_of_products(self.idx(2, 0), self.idx(0, 1), self.idx(0, 0), self.idx(2, 1));
+            ret[2, 2] = difference_of_products(self.idx(0, 0), self.idx(1, 1), self.idx(1, 0), self.idx(0, 1));
 
             ret.idx(1, 0) = ret.idx(0, 1);
             ret.idx(2, 0) = ret.idx(0, 2);
@@ -369,16 +359,17 @@ namespace tensor_impl
             return ret;
         }
 
-        Concrete<T, N...> symmetric_invert() const
+        template<typename Self>
+        Self symmetric_invert(this const Self& self)
         {
             assert(sizeof...(N) == 2);
             assert((((N == 3) && ...)) || ((N == 4) && ...));
 
             if constexpr(((N == 3) && ...))
             {
-                T d = 1/symmetric_det3();
+                T d = 1/self.symmetric_det3();
 
-                Concrete<T, N...> ret = symmetric_unit_invert();
+                Self ret = self.symmetric_unit_invert();
 
                 ret.idx(0, 0) = ret.idx(0, 0) * d;
                 ret.idx(0, 1) = ret.idx(0, 1) * d;
@@ -401,27 +392,27 @@ namespace tensor_impl
                 ///[12,13,14,15]
 
                 std::array<T, 16> m;
-                m[0] = idx(0, 0);
-                m[1] = idx(0, 1);
-                m[2] = idx(0, 2);
-                m[3] = idx(0, 3);
-                m[4] = idx(1, 0);
-                m[5] = idx(1, 1);
-                m[6] = idx(1, 2);
-                m[7] = idx(1, 3);
-                m[8] = idx(2, 0);
-                m[9] = idx(2, 1);
-                m[10] = idx(2, 2);
-                m[11] = idx(2, 3);
-                m[12] = idx(3, 0);
-                m[13] = idx(3, 1);
-                m[14] = idx(3, 2);
-                m[15] = idx(3, 3);
+                m[0] = self.idx(0, 0);
+                m[1] = self.idx(0, 1);
+                m[2] = self.idx(0, 2);
+                m[3] = self.idx(0, 3);
+                m[4] = self.idx(1, 0);
+                m[5] = self.idx(1, 1);
+                m[6] = self.idx(1, 2);
+                m[7] = self.idx(1, 3);
+                m[8] = self.idx(2, 0);
+                m[9] = self.idx(2, 1);
+                m[10] = self.idx(2, 2);
+                m[11] = self.idx(2, 3);
+                m[12] = self.idx(3, 0);
+                m[13] = self.idx(3, 1);
+                m[14] = self.idx(3, 2);
+                m[15] = self.idx(3, 3);
 
                 std::array<T, 16> inv;
 
                 T det = T();
-                Concrete<T, N...> ret;
+                Self ret;
 
                 inv[0] = m[5] * m[10] * m[15] -
                          m[5] * m[11] * m[11] -
@@ -617,84 +608,112 @@ namespace tensor_impl
         {
             return sqrt(squared_length());
         }
-
-        friend Concrete<T, N...> operator+(const Concrete<T, N...>& t1, const Concrete<T, N...>& t2)
-        {
-            return tensor_for_each_binary(t1, t2, [](const T& v1, const T& v2){return v1 + v2;});
-        }
-
-        friend Concrete<T, N...>& operator+=(Concrete<T, N...>& t1, const Concrete<T, N...>& t2)
-        {
-            t1 = t1 + t2;
-
-            return t1;
-        }
-
-        friend Concrete<T, N...> operator-(const Concrete<T, N...>& t1, const Concrete<T, N...>& t2)
-        {
-            return tensor_for_each_binary(t1, t2, [](const T& v1, const T& v2){return v1 - v2;});
-        }
-
-        friend Concrete<T, N...> operator*(const Concrete<T, N...>& t1, const Concrete<T, N...>& t2)
-        {
-            return tensor_for_each_binary(t1, t2, [](const T& v1, const T& v2){return v1 * v2;});
-        }
-
-        friend Concrete<T, N...> operator/(const Concrete<T, N...>& t1, const Concrete<T, N...>& t2)
-        {
-            return tensor_for_each_binary(t1, t2, [](const T& v1, const T& v2){return v1 / v2;});
-        }
-
-        friend Concrete<T, N...> operator+(const Concrete<T, N...>& t1, const T& v2)
-        {
-            return tensor_for_each_unary(t1, [&](const T& v1){return v1 + v2;});
-        }
-
-        friend Concrete<T, N...> operator-(const Concrete<T, N...>& t1, const T& v2)
-        {
-            return tensor_for_each_unary(t1, [&](const T& v1){return v1 - v2;});
-        }
-
-        friend Concrete<T, N...> operator*(const Concrete<T, N...>& t1, const T& v2)
-        {
-            return tensor_for_each_unary(t1, [&](const T& v1){return v1 * v2;});
-        }
-
-        friend Concrete<T, N...> operator/(const Concrete<T, N...>& t1, const T& v2)
-        {
-            return tensor_for_each_unary(t1, [&](const T& v1){return v1 / v2;});
-        }
-
-        friend Concrete<T, N...> operator+(const T& v1, const Concrete<T, N...>& t2)
-        {
-            return tensor_for_each_unary(t2, [&](const T& v2){return v1 + v2;});
-        }
-
-        friend Concrete<T, N...> operator-(const T& v1, const Concrete<T, N...>& t2)
-        {
-            return tensor_for_each_unary(t2, [&](const T& v2){return v1 - v2;});
-        }
-
-        friend Concrete<T, N...> operator*(const T& v1, const Concrete<T, N...>& t2)
-        {
-            return tensor_for_each_unary(t2, [&](const T& v2){return v1 * v2;});
-        }
-
-        friend Concrete<T, N...> operator/(const T& v1, const Concrete<T, N...>& t2)
-        {
-            return tensor_for_each_unary(t2, [&](const T& v2){return v1 / v2;});
-        }
-
-        friend Concrete<T, N...> operator-(const Concrete<T, N...>& t1)
-        {
-            return tensor_for_each_unary(t1, [](const T& v1){return -v1;});
-        }
     };
 
-    template<typename T, int... N>
-    struct tensor : tensor_base<tensor, T, N...>
+    template<typename T>
+    inline
+    T operator+(const T& t1, const T& t2)
     {
-        using tensor_base<tensor, T, N...>::dimensions;
+        return tensor_for_each_binary(t1, t2, [](const auto& v1, const auto& v2){return v1 + v2;});
+    }
+
+    template<typename T>
+    inline
+    T& operator+=(T& t1, const T& t2)
+    {
+        t1 = t1 + t2;
+
+        return t1;
+    }
+
+    template<typename T>
+    inline
+    T operator-(const T& t1, const T& t2)
+    {
+        return tensor_for_each_binary(t1, t2, [](const auto& v1, const auto& v2){return v1 - v2;});
+    }
+
+    template<typename T>
+    inline
+    T operator*(const T& t1, const T& t2)
+    {
+        return tensor_for_each_binary(t1, t2, [](const auto& v1, const auto& v2){return v1 * v2;});
+    }
+
+    template<typename T>
+    inline
+    T operator/(const T& t1, const T& t2)
+    {
+        return tensor_for_each_binary(t1, t2, [](const auto& v1, const auto& v2){return v1 / v2;});
+    }
+
+    template<typename T>
+    inline
+    T operator+(const T& t1, const typename T::value_type& v2)
+    {
+        return tensor_for_each_unary(t1, [&](const auto& v1){return v1 + v2;});
+    }
+
+    template<typename T>
+    inline
+    T operator-(const T& t1, const typename T::value_type& v2)
+    {
+        return tensor_for_each_unary(t1, [&](const auto& v1){return v1 - v2;});
+    }
+
+    template<typename T>
+    inline
+    T operator*(const T& t1, const typename T::value_type& v2)
+    {
+        return tensor_for_each_unary(t1, [&](const auto& v1){return v1 * v2;});
+    }
+
+    template<typename T>
+    inline
+    T operator/(const T& t1, const typename T::value_type& v2)
+    {
+        return tensor_for_each_unary(t1, [&](const auto& v1){return v1 / v2;});
+    }
+
+    template<typename T>
+    inline
+    T operator+(const typename T::value_type& v1, const T& t2)
+    {
+        return tensor_for_each_unary(t2, [&](const auto& v2){return v1 + v2;});
+    }
+
+    template<typename T>
+    inline
+    T operator-(const typename T::value_type& v1, const auto& t2)
+    {
+        return tensor_for_each_unary(t2, [&](const auto& v2){return v1 - v2;});
+    }
+
+    template<typename T>
+    inline
+    T operator*(const typename T::value_type& v1, const T& t2)
+    {
+        return tensor_for_each_unary(t2, [&](const auto& v2){return v1 * v2;});
+    }
+
+    template<typename T>
+    inline
+    T operator/(const typename T::value_type& v1, const T& t2)
+    {
+        return tensor_for_each_unary(t2, [&](const auto& v2){return v1 / v2;});
+    }
+
+    template<typename T>
+    inline
+    T operator-(const T& t1)
+    {
+        return tensor_for_each_unary(t1, [](const auto& v1){return -v1;});
+    }
+
+    template<typename T, int... N>
+    struct tensor : tensor_base<T, N...>
+    {
+        using tensor_base<T, N...>::dimensions;
 
         template<typename U>
         tensor<U, N...> as() const
@@ -710,12 +729,12 @@ namespace tensor_impl
 
         tensor<T, N...> norm() const
         {
-            return *this / tensor_base<tensor, T, N...>::length();
+            return *this / tensor_base<T, N...>::length();
         }
     };
 
-    template<typename TestTensor, typename T, int... N>
-    concept SizedTensor = std::is_base_of_v<tensor_base<TestTensor::template concrete_t, T, N...>, TestTensor>;
+    //template<typename TestTensor, typename T, int... N>
+    //concept SizedTensor = std::is_base_of_v<tensor_base<TestTensor::template concrete_t, T, N...>, TestTensor>;
 
     template<typename T, int N>
     inline
@@ -780,6 +799,13 @@ namespace tensor_impl
         return tensor_for_each_nary([](const T& v1, const T& v2, const T& v3){return clamp(v1, v2, v3);}, t1, t2, t3);
     }
 
+    template<typename U, template<typename, int...> typename TensorType, typename T, int... N>
+    inline
+    TensorType<U, N...> type_convert(const TensorType<T, N...>& in, const U& type)
+    {
+        return TensorType<U, N...>();
+    }
+
     template<typename Raw, typename U, typename... args>
     inline
     auto tensor_for_each_nary(U&& u, Raw&& v1, args&&... ten)
@@ -841,7 +867,7 @@ namespace tensor_impl
             {
                 int len = v1.get_first_of();
 
-                typename T::template concrete_with_length_t<real_type> ret;
+                decltype(type_convert(v1, real_type())) ret;
 
                 for(int i=0; i < len; i++)
                 {
@@ -855,7 +881,7 @@ namespace tensor_impl
                 int l1 = v1.get_first_of();
                 int l2 = v1.get_second_of();
 
-                typename T::template concrete_with_length_t<real_type> ret;
+                decltype(type_convert(v1, real_type())) ret;
 
                 for(int i=0; i < l1; i++)
                 {
@@ -873,7 +899,7 @@ namespace tensor_impl
                 int l2 = v1.get_second_of();
                 int l3 = v1.get_third_of();
 
-                typename T::template concrete_with_length_t<real_type> ret;
+                decltype(type_convert(v1, real_type())) ret;
 
                 for(int i=0; i < l1; i++)
                 {
@@ -898,9 +924,9 @@ namespace tensor_impl
         }
     }
 
-    template<template<typename T, int... N> typename Concrete, typename U, typename T, int... N>
+    template<typename T, typename U>
     inline
-    auto tensor_for_each_unary(const Concrete<T, N...>& v, U&& u)
+    auto tensor_for_each_unary(const T& v, U&& u)
     {
         return tensor_for_each_nary(std::forward<U>(u), v);
     }
@@ -935,23 +961,23 @@ namespace tensor_impl
     #endif // 0
 
     template<typename T, int... N>
-    struct inverse_metric : tensor_base<inverse_metric, T, N...>
+    struct inverse_metric : tensor_base<T, N...>
     {
 
     };
 
-    template<template<typename T, int... N> typename Concrete, typename T, int... N>
-    struct metric_base : tensor_base<Concrete, T, N...>
+    template< typename T, int... N>
+    struct metric_base : tensor_base<T, N...>
     {
         T det() const
         {
-            return tensor_base<Concrete, T, N...>::symmetric_det3();
+            return tensor_base<T, N...>::symmetric_det3();
         }
 
         virtual inverse_metric<T, N...> invert() const
         {
             inverse_metric<T, N...> r;
-            r.data = tensor_base<Concrete, T, N...>::symmetric_invert().data;
+            r.data = tensor_base<T, N...>::symmetric_invert().data;
 
             return r;
         }
@@ -960,7 +986,7 @@ namespace tensor_impl
     };
 
     template<typename T, int... N>
-    struct metric : metric_base<metric, T, N...>
+    struct metric : metric_base<T, N...>
     {
 
     };
@@ -971,15 +997,14 @@ namespace tensor_impl
         virtual inverse_metric<T, N...> invert() const override
         {
             inverse_metric<T, N...> r;
-            r.data = tensor_base<metric, T, N...>::symmetric_unit_invert().data;
+            r.data = tensor_base<T, N...>::symmetric_unit_invert().data;
 
             return r;
         }
     };
 
-    template<typename TestTensor, typename T, int... N>
-    concept MetricTensor = std::is_base_of_v<metric_base<TestTensor::template concrete_t, T, N...>, TestTensor>;
-
+    //template<typename TestTensor, typename T, int... N>
+    //concept MetricTensor = std::is_base_of_v<metric_base<TestTensor::template concrete_t, T, N...>, TestTensor>;
 
     template<typename T, int... N>
     inline
