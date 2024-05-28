@@ -2,6 +2,7 @@
 #define TENSOR_HPP_INCLUDED
 
 #include <cmath>
+#include <assert.h>
 
 namespace tensor_impl
 {
