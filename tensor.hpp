@@ -1,7 +1,6 @@
 #ifndef TENSOR_HPP_INCLUDED
 #define TENSOR_HPP_INCLUDED
 
-#include "vec.hpp"
 #include <cmath>
 
 namespace tensor_impl
@@ -937,28 +936,6 @@ namespace tensor_impl
     {
         return tensor_for_each_nary(std::forward<Func>(u), std::forward<V1>(v1), std::forward<V2>(v2));
     }
-
-    template<int... Indices>
-    struct tensor_indices
-    {
-        std::array<int, sizeof...(Indices)> indices = {Indices...};
-    };
-
-    #if 0
-    template<typename T, int... N, int... M, int... N1, int... M1>
-    inline
-    auto sum_multiply_fat(const tensor<T, N...>& t1, const tensor<T, M...>& t2, const tensor_indices<N1...>& b1, const tensor_indices<M1...>& b2)
-    {
-        constexpr int total_dimensionality = sizeof...(N) + sizeof...(M);
-        constexpr int argument_summation = sizeof...(N1) + sizeof...(M1);
-
-        constexpr int return_dimensions = total_dimensionality - argument_summation;
-
-        ///need to turn return_dimensions into a parameter pack of return_dimensions long, where each element has a value of the components of N...
-
-        //tensor<T, return_dimension>
-    }
-    #endif // 0
 
     template<typename T, int... N>
     struct inverse_metric : tensor_base<T, N...>
