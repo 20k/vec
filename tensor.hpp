@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include <assert.h>
+#include <algorithm>
 
 namespace tensor_impl
 {
