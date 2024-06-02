@@ -218,9 +218,9 @@ namespace dual_types
     inline
     dual_v<T> sqrt(const dual_v<T>& d1)
     {
-        using namespace std;
+        using std::sqrt;
 
-        return dual_v<T>(::sqrt(d1.real), T(0.5f) * d1.dual / ::sqrt(d1.real));
+        return dual_v<T>(sqrt(d1.real), T(0.5f) * d1.dual / sqrt(d1.real));
     }
 
     ///if this has no imaginary components, its guaranteed to be >= 0
@@ -243,9 +243,10 @@ namespace dual_types
     inline
     dual_v<T> pow(const dual_v<T>& d1, const dual_v<T>& d2)
     {
-        using namespace std;
+        using std::pow;
+        using std::log;
 
-        return dual_v<T>(::pow(d1.real, d2.real), ::pow(d1.real, d2.real - 1) * d2.real * d1.dual + ::pow(d1.real, d2.real - 1) * d1.real * ::log(d1.real) * d2.dual);
+        return dual_v<T>(pow(d1.real, d2.real), pow(d1.real, d2.real - 1) * d2.real * d1.dual + pow(d1.real, d2.real - 1) * d1.real * log(d1.real) * d2.dual);
     }
 
     template<typename T, typename U>
@@ -253,17 +254,17 @@ namespace dual_types
     inline
     dual_v<T> pow(const dual_v<T>& d1, const U& d2)
     {
-        using namespace std;
+        using std::pow;
 
         if constexpr(is_complex<T>())
         {
             static_assert(std::is_same_v<U, int>);
 
-            return dual_v<T>(::pow(d1.real, d2), ::pow(d1.real, d2 - 1) * T(d2) * d1.dual);
+            return dual_v<T>(pow(d1.real, d2), pow(d1.real, d2 - 1) * T(d2) * d1.dual);
         }
         else
         {
-            return dual_v<T>(::pow(d1.real, T(d2)), ::pow(d1.real, T(d2 - 1)) * T(d2) * d1.dual);
+            return dual_v<T>(pow(d1.real, T(d2)), pow(d1.real, T(d2 - 1)) * T(d2) * d1.dual);
         }
     }
 
@@ -271,6 +272,8 @@ namespace dual_types
     inline
     dual_v<T> log(const dual_v<T>& d1)
     {
+        using std::log;
+
         return dual_v<T>(log(d1.real), d1.dual / d1.real);
     }
 
@@ -278,9 +281,9 @@ namespace dual_types
     inline
     dual_v<T> fabs(const dual_v<T>& d1)
     {
-        using namespace std;
+        using std::fabs;
 
-        return dual_v<T>(::fabs(d1.real), sign(d1.real) * d1.dual);
+        return dual_v<T>(fabs(d1.real), sign(d1.real) * d1.dual);
     }
 
     ///https://math.stackexchange.com/questions/2352341/the-derivative-of-absolute-value-of-complex-function-fx-z-where-x-in-math
@@ -288,9 +291,9 @@ namespace dual_types
     inline
     dual_v<T> fabs(const dual_v<complex_v<T>>& d1)
     {
-        using namespace std;
+        using std::fabs;
 
-        return dual_v<T>(::fabs(d1.real), Real(d1.real * conjugate(d1.dual)) / fabs(d1.real));
+        return dual_v<T>(fabs(d1.real), Real(d1.real * conjugate(d1.dual)) / fabs(d1.real));
     }
 
     template<typename T>
@@ -304,104 +307,113 @@ namespace dual_types
     inline
     dual_v<T> exp(const dual_v<T>& d1)
     {
-        using namespace std;
+        using std::exp;
 
-        return dual_v<T>(::exp(d1.real), d1.dual * ::exp(d1.real));
+        return dual_v<T>(exp(d1.real), d1.dual * exp(d1.real));
     }
 
     template<typename T>
     inline
     dual_v<T> sin(const dual_v<T>& d1)
     {
-        using namespace std;
+        using std::sin;
+        using std::cos;
 
-        return dual_v<T>(::sin(d1.real), d1.dual * ::cos(d1.real));
+        return dual_v<T>(sin(d1.real), d1.dual * cos(d1.real));
     }
 
     template<typename T>
     inline
     dual_v<T> cos(const dual_v<T>& d1)
     {
-        using namespace std;
+        using std::cos;
+        using std::sin;
 
-        return dual_v<T>(::cos(d1.real), -d1.dual * ::sin(d1.real));
+        return dual_v<T>(cos(d1.real), -d1.dual * sin(d1.real));
     }
 
     template<typename T>
     inline
     dual_v<T> sec(const dual_v<T>& d1)
     {
-        return 1/::cos(d1);
+        using std::cos;
+
+        return 1/cos(d1);
     }
 
     template<typename T>
     inline
     dual_v<T> tan(const dual_v<T>& d1)
     {
-        using namespace std;
+        using std::tan;
+        using std::cos;
 
-        return dual_v<T>(::tan(d1.real), d1.dual / (::cos(d1.real) * ::cos(d1.real)));
+        return dual_v<T>(tan(d1.real), d1.dual / (cos(d1.real) * cos(d1.real)));
     }
 
     template<typename T>
     inline
     dual_v<T> sinh(const dual_v<T>& d1)
     {
-        using namespace std;
+        using std::sinh;
+        using std::cosh;
 
-        return dual_v<T>(::sinh(d1.real), d1.dual * ::cosh(d1.real));
+        return dual_v<T>(sinh(d1.real), d1.dual * cosh(d1.real));
     }
 
     template<typename T>
     inline
     dual_v<T> cosh(const dual_v<T>& d1)
     {
-        using namespace std;
+        using std::cosh;
+        using std::sinh;
 
-        return dual_v<T>(::cosh(d1.real), d1.dual * ::sinh(d1.real));
+        return dual_v<T>(cosh(d1.real), d1.dual * sinh(d1.real));
     }
 
     template<typename T>
     inline
     dual_v<T> tanh(const dual_v<T>& d1)
     {
-        using namespace std;
+        using std::tanh;
 
-        return dual_v<T>(::tanh(d1.real), d1.dual * (1 - ::tanh(d1.real) * ::tanh(d1.real)));
+        return dual_v<T>(tanh(d1.real), d1.dual * (1 - tanh(d1.real) * tanh(d1.real)));
     }
 
     template<typename T>
     inline
     dual_v<T> asin(const dual_v<T>& d1)
     {
-        using namespace std;
+        using std::asin;
+        using std::sqrt;
 
-        return dual_v<T>(::asin(d1.real), d1.dual / ::sqrt(1 - d1.real * d1.real));
+        return dual_v<T>(asin(d1.real), d1.dual / sqrt(1 - d1.real * d1.real));
     }
 
     template<typename T>
     inline
     dual_v<T> acos(const dual_v<T>& d1)
     {
-        using namespace std;
+        using std::acos;
+        using std::sqrt;
 
-        return dual_v<T>(::acos(d1.real), -d1.dual / ::sqrt(1 - d1.real * d1.real));
+        return dual_v<T>(acos(d1.real), -d1.dual / sqrt(1 - d1.real * d1.real));
     }
 
     template<typename T>
     inline
     dual_v<T> atan(const dual_v<T>& d1)
     {
-        using namespace std;
+        using std::atan;
 
-        return dual_v<T>(::atan(d1.real), d1.dual / (1 + d1.real * d1.real));
+        return dual_v<T>(atan(d1.real), d1.dual / (1 + d1.real * d1.real));
     }
 
     template<typename T>
     inline
     dual_v<T> atan2(const dual_v<T>& d1, const dual_v<T>& d2)
     {
-        using namespace std;
+        using std::atan2;
 
         return dual_v<T>(atan2(d1.real, d2.real), (-d1.real * d2.dual / (d2.real * d2.real + d1.real * d1.real)) + d1.dual * d2.real / (d2.real * d2.real + d1.real * d1.real));
     }
@@ -450,9 +462,9 @@ namespace dual_types
     inline
     dual_v<T> fast_length(const dual_v<T>& d1, const dual_v<T>& d2, const dual_v<T>& d3)
     {
-        using namespace std;
+        using std::sqrt;
 
-        return ::sqrt(d1 * d1 + d2 * d2 + d3 * d3);
+        return sqrt(d1 * d1 + d2 * d2 + d3 * d3);
     }
 
     template<typename T>
