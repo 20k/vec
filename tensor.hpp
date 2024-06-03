@@ -240,6 +240,13 @@ namespace tensor_impl
             return (N * ...);
         }
 
+        int size() const
+        {
+            static_assert(sizeof...(N) == 1);
+
+            return (N + ...);
+        }
+
         tensor<T, N...> to_tensor() const
         {
             tensor<T, N...> ret;
