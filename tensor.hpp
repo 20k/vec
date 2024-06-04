@@ -204,6 +204,24 @@ namespace tensor_impl
         }
     };
 
+    ///this could be made more generic, but not going to pretend its not just for the value library currently
+    template<typename T>
+    struct mutable_proxy2
+    {
+        const T& ten;
+
+        mutable_proxy2(const T& _ten) : ten(_ten){}
+
+        template<typename V>
+        void operator=(const V& other)
+        {
+            tensor_for_each_binary(ten, other, [&](const auto& v1, const auto& v2)
+            {
+                mut(v1) = v2;
+            });
+        }
+    };
+
     ///todo: use deducing this to make this a lot simpler
     template<typename T, int... N>
     struct tensor_base
@@ -622,7 +640,7 @@ namespace tensor_impl
     inline
     auto mut(const tensor<T, N>& in)
     {
-        return in.as_mutable();
+        return mutable_proxy2(in);;
     }
 
     template<typename T>
