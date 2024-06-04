@@ -618,6 +618,13 @@ namespace tensor_impl
         }
     };
 
+    template<typename T, int N>
+    inline
+    auto mut(const tensor<T, N>& in)
+    {
+        return in.as_mutable();
+    }
+
     template<typename T>
     inline
     T operator+(const T& t1, const T& t2)
