@@ -508,7 +508,7 @@ namespace tensor_impl
                 {
                     for(int y=0; y < 4; y++)
                     {
-                        ret.idx(y, x) = inv[y * 4 + x] * det;
+                        ret.idx(x, y) = inv[y * 4 + x] * det;
                     }
                 }
 
