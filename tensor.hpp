@@ -616,6 +616,18 @@ namespace tensor_impl
         {
             return sqrt(squared_length());
         }
+
+        template<typename Func>
+        void for_each(Func&& f)
+        {
+            tensor_for_each_nary(std::forward<Func>(f), *this);
+        }
+
+        template<typename Func>
+        void for_each(Func&& f) const
+        {
+            tensor_for_each_nary(std::forward<Func>(f), *this);
+        }
     };
 
     template<typename T>
