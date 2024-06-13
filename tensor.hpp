@@ -961,8 +961,22 @@ namespace tensor_impl
     template<typename T, int... N>
     struct inverse_metric : tensor_base<T, N...>
     {
+        static constexpr int M = tensor_impl::get_first_of<N...>();
 
+        tensor<T, M> raise(const tensor<T, M>& in)
+        {
+            return raise_index(in, *this, 0);
+        }
+
+        template<int... O>
+        tensor<T, O...> raise(const tensor<T, O...>& in, int index)
+        {
+            return raise_index(in, *this, index);
+        }
     };
+
+    template< typename T, int... N>
+    struct metric;
 
     template< typename T, int... N>
     struct metric_base : tensor_base<T, N...>
@@ -980,13 +994,25 @@ namespace tensor_impl
             return r;
         }
 
+
         virtual ~metric_base(){}
     };
 
     template<typename T, int... N>
     struct metric : metric_base<T, N...>
     {
+        static constexpr int M = tensor_impl::get_first_of<N...>();
 
+        tensor<T, M> lower(const tensor<T, M>& in) const
+        {
+            return lower_index(in, *this, 0);
+        }
+
+        template<int... O>
+        tensor<T, O...> lower(const tensor<T, O...>& in, int index) const
+        {
+            return lower_index(in, *this, index);
+        }
     };
 
     template<typename T, int... N>
@@ -1148,6 +1174,28 @@ namespace tensor_impl
 
         return ret;
     }
+
+    template<typename T, int... N>
+    inline
+    T dot(const tensor<T, N...>& v1, const tensor<T, N...>& v2)
+    {
+        T ret = T();
+
+        tensor_for_each_binary(v1, v2, [&](const T& i1, const T& i2)
+        {
+            ret += i1 * i2;
+        });
+
+        return ret;
+    }
+
+    template<typename T, int N>
+    inline
+    T dot_metric(const tensor<T, N>& v1_upper, const tensor<T, N>& v2_upper, const metric<T, N, N>& met)
+    {
+        return dot(met.lower(v1_upper), v2_upper);
+    }
+
 
     /*template<typename T>
     vec<3, T> operator*(const mat<3, T> m, const vec<3, T>& other)
