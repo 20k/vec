@@ -177,6 +177,12 @@ namespace dual_types
         }
 
         friend
+        dual_v<T> operator%(const dual_v<T>& d1, const dual_v<T>& d2)
+        {
+            return fmod(d1, d2);
+        }
+
+        friend
         T operator<(const dual_v<T>& d1, const dual_v<T>& d2)
         {
             return d1.real < d2.real;
@@ -206,6 +212,9 @@ namespace dual_types
             return d1.real == d2.real;
         }
     };
+
+    template<typename T>
+    dual_v(const T& in) -> dual_v<T>;
 
     template<typename T>
     inline
@@ -449,6 +458,24 @@ namespace dual_types
         return {smooth_fmod(d1.real, d2), d1.dual};
     }
 
+    template<typename T>
+    inline
+    dual_v<T> fmod(const dual_v<T>& d1, const T& d2)
+    {
+        using std::fmod;
+
+        return {fmod(d1.real, d2), d1.dual};
+    }
+
+    template<typename T>
+    inline
+    dual_v<T> fmod(const dual_v<T>& d1, const dual_v<T>& d2)
+    {
+        using std::fmod;
+
+        return {fmod(d1.real, d2.real), d1.dual - d2.dual * floor(d1.real/d2.real)};
+    }
+
     /*template<typename T>
     inline
     dual_v<T> fast_length(const dual_v<T>& d1, const dual_v<T>& d2, const dual_v<T>& d3)
@@ -508,6 +535,15 @@ namespace dual_types
     dual_v<T> select(const dual_v<T>& d1, const dual_v<T>& d2, const T& d3)
     {
         return dual_v<T>(select(d1.real, d2.real, d3), select(d1.dual, d2.dual, d3));
+    }
+
+    template<typename T>
+    inline
+    auto isfinite(const dual_v<T>& d1)
+    {
+        using std::isfinite;
+
+        return dual_v(isfinite(d1.real));
     }
 
     template<typename T, typename U, typename V>
