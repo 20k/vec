@@ -1198,6 +1198,12 @@ namespace tensor_impl
         return dot(met.lower(v1_upper), v2_upper);
     }
 
+    template<typename T, int... N>
+    inline
+    tensor<T, N...> mix(const tensor<T, N...>& v1, const tensor<T, N...>& v2, const T& frac)
+    {
+        return tensor_for_each_nary([&frac](const T& i1, const T& i2){return i1 * (1-frac) + i2 * frac;}, v1, v2);
+    }
 
     /*template<typename T>
     vec<3, T> operator*(const mat<3, T> m, const vec<3, T>& other)
