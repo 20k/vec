@@ -831,7 +831,9 @@ namespace tensor_impl
     auto tensor_for_each_nary(U&& u, Raw&& v1, args&&... ten)
     {
         using T = std::remove_cvref_t<Raw>;
-        using real_type = decltype(u(std::declval<typename T::value_type>(), std::declval<typename std::remove_cvref_t<args>::value_type>()...));
+
+        std::tuple<typename T::value_type, typename std::remove_cvref_t<args>::value_type...> tup_args;
+        using real_type = decltype(std::apply(u, tup_args));
 
         if constexpr(std::is_same_v<real_type, void>)
         {
