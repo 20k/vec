@@ -386,7 +386,7 @@ namespace dual_types
     {
         using std::tanh;
 
-        return dual_v<T>(tanh(d1.real), d1.dual * (1 - tanh(d1.real) * tanh(d1.real)));
+        return dual_v<T>(tanh(d1.real), d1.dual * (T(1) - tanh(d1.real) * tanh(d1.real)));
     }
 
     template<typename T>
@@ -396,7 +396,7 @@ namespace dual_types
         using std::asin;
         using std::sqrt;
 
-        return dual_v<T>(asin(d1.real), d1.dual / sqrt(1 - d1.real * d1.real));
+        return dual_v<T>(asin(d1.real), d1.dual / sqrt(T(1) - d1.real * d1.real));
     }
 
     template<typename T>
@@ -406,7 +406,7 @@ namespace dual_types
         using std::acos;
         using std::sqrt;
 
-        return dual_v<T>(acos(d1.real), -d1.dual / sqrt(1 - d1.real * d1.real));
+        return dual_v<T>(acos(d1.real), -d1.dual / sqrt(T(1) - d1.real * d1.real));
     }
 
     template<typename T>
@@ -415,7 +415,7 @@ namespace dual_types
     {
         using std::atan;
 
-        return dual_v<T>(atan(d1.real), d1.dual / (1 + d1.real * d1.real));
+        return dual_v<T>(atan(d1.real), d1.dual / (T(1) + d1.real * d1.real));
     }
 
     template<typename T>
@@ -535,6 +535,13 @@ namespace dual_types
     dual_v<T> select(const dual_v<T>& d1, const dual_v<T>& d2, const T& d3)
     {
         return dual_v<T>(select(d1.real, d2.real, d3), select(d1.dual, d2.dual, d3));
+    }
+
+    template<typename T>
+    inline
+    dual_v<T> ternary(const dual_v<T>& d1, const dual_v<T>& d2, const dual_v<T>& d3)
+    {
+        return dual_v<T>(ternary(d1.real, d2.real, d3.real), ternary(d1.real, d2.dual, d3.dual));
     }
 
     template<typename T>
