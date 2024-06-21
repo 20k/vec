@@ -546,6 +546,13 @@ namespace dual_types
 
     template<typename T>
     inline
+    dual_v<T> ternary(const T& d1, const dual_v<T>& d2, const dual_v<T>& d3)
+    {
+        return dual_v<T>(ternary(d1, d2.real, d3.real), ternary(d1, d2.dual, d3.dual));
+    }
+
+    template<typename T>
+    inline
     auto isfinite(const dual_v<T>& d1)
     {
         using std::isfinite;
@@ -564,14 +571,14 @@ namespace dual_types
     inline
     auto max(const dual_v<T>& d1, const dual_v<T>& d2)
     {
-        return dual_if(d1 < d2, [&](){return d2;}, [&](){return d1;});
+        return ternary(d1 < d2, d2, d1);
     }
 
     template<typename T>
     inline
     auto min(const dual_v<T>& d1, const dual_v<T>& d2)
     {
-        return dual_if(d1 < d2, [&](){return d1;}, [&](){return d2;});
+        return ternary(d1 < d2, d1, d2);
     }
 };
 
