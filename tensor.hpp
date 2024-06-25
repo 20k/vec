@@ -975,6 +975,15 @@ namespace tensor_impl
         return tensor_for_each_nary([](const T& v1, const T& v2, const T& v3){return clamp(v1, v2, v3);}, t1, t2, t3);
     }
 
+    template<typename T, typename U, int... N>
+    inline
+    auto clamp(const tensor<T, N...>& t1, const U& v2, const U& v3)
+    {
+        using std::clamp;
+
+        return tensor_for_each_nary([&](const T& v1){return clamp(v1, v2, v3);}, t1);
+    }
+
     template<typename U, template<typename, int...> typename TensorType, typename T, int... N>
     inline
     TensorType<U, N...> type_convert(const TensorType<T, N...>& in, const U& type)
