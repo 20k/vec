@@ -4,6 +4,7 @@
 #include <cmath>
 #include <assert.h>
 #include <algorithm>
+#include <tuple>
 
 namespace tensor_impl
 {
@@ -773,16 +774,10 @@ namespace tensor_impl
             return sqrt(squared_length());
         }
 
-        template<typename Func>
-        void for_each(Func&& f)
+        template<typename Self, typename Func>
+        auto for_each(this Self&& self, Func&& f)
         {
-            tensor_for_each_nary(std::forward<Func>(f), *this);
-        }
-
-        template<typename Func>
-        void for_each(Func&& f) const
-        {
-            tensor_for_each_nary(std::forward<Func>(f), *this);
+            return tensor_for_each_nary(std::forward<Func>(f), std::forward<Self>(self));
         }
     };
 
