@@ -893,7 +893,7 @@ namespace tensor_impl
         }
 
         template<typename U>
-        explicit operator tensor<U, N...>()
+        explicit operator tensor<U, N...>() const
         {
             return tensor_for_each_unary(*this, [&](const T& convert){return (U)convert;});
         }
