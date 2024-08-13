@@ -1383,23 +1383,7 @@ namespace tensor_impl
 
         return val;
     }*/
-}
 
-template<typename T, int... N>
-using tensor = tensor_impl::tensor<T, N...>;
-
-template<typename T, int... N>
-using unit_metric = tensor_impl::unit_metric<T, N...>;
-
-template<typename T, int... N>
-using metric = tensor_impl::metric<T, N...>;
-
-template<typename T, int... N>
-using inverse_metric = tensor_impl::inverse_metric<T, N...>;
-
-///compatibility with the OpenCL library
-namespace cl_adl
-{
     template<typename T, int N>
     inline
     std::array<T, N> type_to_array(const tensor<T, N>& in)
@@ -1414,5 +1398,17 @@ namespace cl_adl
         return ret;
     }
 }
+
+template<typename T, int... N>
+using tensor = tensor_impl::tensor<T, N...>;
+
+template<typename T, int... N>
+using unit_metric = tensor_impl::unit_metric<T, N...>;
+
+template<typename T, int... N>
+using metric = tensor_impl::metric<T, N...>;
+
+template<typename T, int... N>
+using inverse_metric = tensor_impl::inverse_metric<T, N...>;
 
 #endif
