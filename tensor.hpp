@@ -915,7 +915,7 @@ namespace tensor_impl
 
         for(int i=0; i < N; i++)
         {
-            ret = fma(t1[i], t2[i], ret);
+            ret += t1.idx(i) * t2.idx(i);
         }
 
         return ret;
@@ -931,7 +931,7 @@ namespace tensor_impl
         {
             for(int j=0; j < N; j++)
             {
-                ret = fma(t1[i, j], t2[i, j], ret);
+                ret += t1.idx(i, j) * t2.idx(i, j);
             }
         }
 
@@ -1218,8 +1218,7 @@ namespace tensor_impl
 
             for(int s=0; s < N; s++)
             {
-                //sum = sum + met.idx(i, s) * mT.idx(s);
-                sum = fma(met[i, s], mT[s], sum);
+                sum = sum + met.idx(i, s) * mT.idx(s);
             }
 
             ret.idx(i) = sum;
@@ -1244,14 +1243,12 @@ namespace tensor_impl
                 {
                     if(index == 0)
                     {
-                        //sum = sum + met.idx(i, s) * mT.idx(s, j);
-                        sum = fma(met[i, s], mT[s, j], sum);
+                        sum = sum + met.idx(i, s) * mT.idx(s, j);
                     }
 
                     if(index == 1)
                     {
-                        //sum = sum + met.idx(j, s) * mT.idx(i, s);
-                        sum = fma(met[j, s], mT[i, s], sum);
+                        sum = sum + met.idx(j, s) * mT.idx(i, s);
                     }
                 }
 
@@ -1280,20 +1277,17 @@ namespace tensor_impl
                     {
                         if(index == 0)
                         {
-                            //sum = sum + met.idx(i, s) * mT.idx(s, j, k);
-                            sum = fma(met[i, s], mT[s, j, k], sum);
+                            sum = sum + met.idx(i, s) * mT.idx(s, j, k);
                         }
 
                         if(index == 1)
                         {
-                            //sum = sum + met.idx(j, s) * mT.idx(i, s, k);
-                            sum = fma(met[j, s], mT[i, s, k], sum);
+                            sum = sum + met.idx(j, s) * mT.idx(i, s, k);
                         }
 
                         if(index == 2)
                         {
-                            //sum = sum + met.idx(k, s) * mT.idx(i, j, s);
-                            sum = fma(met[k, s], mT[i, j, s], sum);
+                            sum = sum + met.idx(k, s) * mT.idx(i, j, s);
                         }
                     }
 
