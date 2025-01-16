@@ -1367,6 +1367,13 @@ namespace tensor_impl
 
     template<typename T, int... N>
     inline
+    metric<T, N...> mix(const metric<T, N...>& v1, const metric<T, N...>& v2, const T& frac)
+    {
+        return tensor_for_each_nary([&frac](const T& i1, const T& i2){return i1 * (1-frac) + i2 * frac;}, v1, v2);
+    }
+
+    template<typename T, int... N>
+    inline
     tensor<T, N...> fabs(const tensor<T, N...>& v1)
     {
         return tensor_for_each_nary([](const T& in){using std::fabs; return fabs(in);}, v1);
