@@ -739,6 +739,14 @@ namespace tensor_impl
             return idx(3);
         }
 
+        tensor<T, 2> yz() const
+        {
+            static_assert(sizeof...(N) == 1);
+            static_assert(((N >= 3) && ...));
+
+            return {idx(1), idx(2)};
+        }
+
         tensor<T, 3> xyz() const
         {
             static_assert(sizeof...(N) == 1);
@@ -1377,6 +1385,13 @@ namespace tensor_impl
     tensor<T, N...> fabs(const tensor<T, N...>& v1)
     {
         return tensor_for_each_nary([](const T& in){using std::fabs; return fabs(in);}, v1);
+    }
+
+    template<typename T, int... N>
+    inline
+    tensor<T, N...> fmod(const tensor<T, N...>& v1, const tensor<T, N...>& v2)
+    {
+        return tensor_for_each_nary([](const T& i1, const T& i2){using std::fmod; return fmod(i1, i2);}, v1, v2);
     }
 
     /*template<typename T>
