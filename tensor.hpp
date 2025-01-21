@@ -739,6 +739,14 @@ namespace tensor_impl
             return idx(3);
         }
 
+        tensor<T, 2> xy() const
+        {
+            static_assert(sizeof...(N) == 1);
+            static_assert(((N >= 3) && ...));
+
+            return {idx(0), idx(1)};
+        }
+
         tensor<T, 2> yz() const
         {
             static_assert(sizeof...(N) == 1);
