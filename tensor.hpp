@@ -795,6 +795,15 @@ namespace tensor_impl
         {
             return tensor_for_each_nary(std::forward<Func>(f), std::forward<Self>(self));
         }
+
+        template<typename Self>
+        void from_tensor(this Self&& self, const tensor<T, N...>& other)
+        {
+            tensor_for_each_binary(std::forward<Self>(self), other, [](auto&& i1, auto&& i2)
+            {
+                i1 = i2;
+            });
+        }
     };
 
     template<typename T>
