@@ -1370,7 +1370,14 @@ vec<N, T> clamp(vec<N, T> v1, U p1, V p2)
     return v1;
 }
 
+template<typename T, typename U>
+concept BoolComparable = requires(T x, U y)
+{
+    {x < y} -> std::same_as<bool>;
+};
+
 template<typename T, typename U, typename V>
+requires BoolComparable<T, U> && BoolComparable<T, V>
 inline
 T clamp(T v1, U p1, V p2)
 {
