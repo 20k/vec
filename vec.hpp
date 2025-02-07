@@ -2027,6 +2027,11 @@ inline float mix(float p1, float p2, float a)
     return p1 * (1.f - a) + p2 * a;
 }
 
+inline double mix(double p1, double p2, double a)
+{
+    return p1 * (1.f - a) + p2 * a;
+}
+
 inline float cos_mix(float p1, float p2, float a)
 {
     float mu2 = (1.f - cos(a * M_PI))/2.f;
