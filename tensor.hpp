@@ -1200,6 +1200,20 @@ namespace tensor_impl
         {
             return lower_index(in, *this, index);
         }
+
+        T dot(const tensor<T, M>& v1_upper, const tensor<T, M>& v2_upper)
+        {
+            auto v1_lower = lower(v1_upper);
+
+            T sum = 0;
+
+            for(int i=0; i < M; i++)
+            {
+                sum += v1_lower[i] * v2_upper[i];
+            }
+
+            return sum;
+        }
     };
 
     template<typename T, int... N>
