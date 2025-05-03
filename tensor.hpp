@@ -1150,15 +1150,30 @@ namespace tensor_impl
     {
         static constexpr int M = tensor_impl::get_first_of<N...>();
 
-        tensor<T, M> raise(const tensor<T, M>& in)
+        tensor<T, M> raise(const tensor<T, M>& in) const
         {
             return raise_index(in, *this, 0);
         }
 
         template<int... O>
-        tensor<T, O...> raise(const tensor<T, O...>& in, int index)
+        tensor<T, O...> raise(const tensor<T, O...>& in, int index) const
         {
             return raise_index(in, *this, index);
+        }
+
+        template<int O>
+        T length_sq(const tensor<T, O>& lo) const
+        {
+            auto raised = raise(lo);
+
+            T ret = {};
+
+            for(int i=0; i < O; i++)
+            {
+                ret += lo[i] * raised[i];
+            }
+
+            return ret;
         }
     };
 
@@ -1181,7 +1196,6 @@ namespace tensor_impl
             return r;
         }
 
-
         virtual ~metric_base(){}
     };
 
@@ -1201,7 +1215,7 @@ namespace tensor_impl
             return lower_index(in, *this, index);
         }
 
-        T dot(const tensor<T, M>& v1_upper, const tensor<T, M>& v2_upper)
+        T dot(const tensor<T, M>& v1_upper, const tensor<T, M>& v2_upper) const
         {
             auto v1_lower = lower(v1_upper);
 
@@ -1213,6 +1227,21 @@ namespace tensor_impl
             }
 
             return sum;
+        }
+
+        template<int O>
+        T length_sq(const tensor<T, O>& hi) const
+        {
+            auto lowered = lower(hi);
+
+            T ret = {};
+
+            for(int i=0; i < O; i++)
+            {
+                ret += hi[i] * lowered[i];
+            }
+
+            return ret;
         }
     };
 
