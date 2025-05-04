@@ -1161,19 +1161,18 @@ namespace tensor_impl
             return raise_index(in, *this, index);
         }
 
-        template<int O>
-        T length_sq(const tensor<T, O>& lo) const
+        T dot(const tensor<T, M>& v1_lower, const tensor<T, M>& v2_lower) const
         {
-            auto raised = raise(lo);
+            auto v1_upper = raise(v1_lower);
 
-            T ret = {};
+            T sum = {};
 
-            for(int i=0; i < O; i++)
+            for(int i=0; i < M; i++)
             {
-                ret += lo[i] * raised[i];
+                sum += v1_upper[i] * v2_lower[i];
             }
 
-            return ret;
+            return sum;
         }
     };
 
@@ -1219,7 +1218,7 @@ namespace tensor_impl
         {
             auto v1_lower = lower(v1_upper);
 
-            T sum = 0;
+            T sum = {};
 
             for(int i=0; i < M; i++)
             {
@@ -1227,21 +1226,6 @@ namespace tensor_impl
             }
 
             return sum;
-        }
-
-        template<int O>
-        T length_sq(const tensor<T, O>& hi) const
-        {
-            auto lowered = lower(hi);
-
-            T ret = {};
-
-            for(int i=0; i < O; i++)
-            {
-                ret += hi[i] * lowered[i];
-            }
-
-            return ret;
         }
     };
 
