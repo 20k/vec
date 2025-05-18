@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <algorithm>
 #include <tuple>
+#include "stdmath.hpp"
 
 namespace tensor_impl
 {
@@ -906,6 +907,104 @@ namespace tensor_impl
         return tensor_for_each_unary(t1, [](const auto& v1){return -v1;});
     }
 
+    template<typename T>
+    inline
+    auto operator<(const T& t1, const T& t2)
+    {
+        return tensor_for_each_binary(t1, t2, [](const auto& v1, const auto& v2){return v1 < v2;});
+    }
+
+    template<typename T>
+    inline
+    auto operator<=(const T& t1, const T& t2)
+    {
+        return tensor_for_each_binary(t1, t2, [](const auto& v1, const auto& v2){return v1 <= v2;});
+    }
+
+    template<typename T>
+    inline
+    auto operator>(const T& t1, const T& t2)
+    {
+        return tensor_for_each_binary(t1, t2, [](const auto& v1, const auto& v2){return v1 > v2;});
+    }
+
+    template<typename T>
+    inline
+    auto operator>=(const T& t1, const T& t2)
+    {
+        return tensor_for_each_binary(t1, t2, [](const auto& v1, const auto& v2){return v1 >= v2;});
+    }
+
+    template<typename T>
+    inline
+    auto operator==(const T& t1, const T& t2)
+    {
+        return tensor_for_each_binary(t1, t2, [](const auto& v1, const auto& v2){return v1 == v2;});
+    }
+
+    template<typename T>
+    inline
+    auto operator&&(const T& t1, const T& t2)
+    {
+        return tensor_for_each_binary(t1, t2, [](const auto& v1, const auto& v2){return v1 && v2;});
+    }
+
+    template<typename T>
+    inline
+    auto operator||(const T& t1, const T& t2)
+    {
+        return tensor_for_each_binary(t1, t2, [](const auto& v1, const auto& v2){return v1 || v2;});
+    }
+
+    template<typename T>
+    inline
+    auto operator!(const T& t1)
+    {
+        return tensor_for_each_unary(t1, [](const auto& v1){return !v1;});
+    }
+
+    template<typename T>
+    inline
+    auto operator<(const T& t1, const typename T::value_type& v2)
+    {
+        return tensor_for_each_unary(t1, [&](const auto& v1){return v1 < v2;});
+    }
+
+    template<typename T>
+    inline
+    auto operator<=(const T& t1, const typename T::value_type& v2)
+    {
+        return tensor_for_each_unary(t1, [&](const auto& v1){return v1 <= v2;});
+    }
+
+    template<typename T>
+    inline
+    auto operator==(const T& t1, const typename T::value_type& v2)
+    {
+        return tensor_for_each_unary(t1, [&](const auto& v1){return v1 == v2;});
+    }
+
+    template<typename T>
+    inline
+    auto operator>(const T& t1, const typename T::value_type& v2)
+    {
+        return tensor_for_each_unary(t1, [&](const auto& v1){return v1 > v2;});
+    }
+
+    template<typename T>
+    inline
+    auto operator>=(const T& t1, const typename T::value_type& v2)
+    {
+        return tensor_for_each_unary(t1, [&](const auto& v1){return v1 >= v2;});
+    }
+
+    template<typename T>
+    inline
+    auto operator==(const typename T::value_type& v1, const T& t2)
+    {
+        return tensor_for_each_unary(t2, [&](const auto& v2){return v1 == v2;});
+    }
+
     template<typename T, int... N>
     struct tensor : tensor_base<T, N...>
     {
@@ -1002,6 +1101,31 @@ namespace tensor_impl
         using std::clamp;
 
         return tensor_for_each_nary([&](const T& v1){return clamp(v1, v2, v3);}, t1);
+    }
+
+    template<typename T>
+    inline
+    auto max(const T& t1, const T& t2)
+    {
+        using std::max;
+
+        return tensor_for_each_binary(t1, t2, [&](const auto& v1, const auto& v2){return max(v1, v2);});
+    }
+
+    template<typename T>
+    inline
+    auto min(const T& t1, const T& t2)
+    {
+        using std::min;
+
+        return tensor_for_each_binary(t1, t2, [&](const auto& v1, const auto& v2){return min(v1, v2);});
+    }
+
+    template<typename bT, typename T>
+    inline
+    auto ternary(const bT& t1, const T& t2, const T& t3)
+    {
+        return tensor_for_each_nary([](const auto& v1, const auto& v2, const auto& v3){return stdmath::uternary(v1, v2, v3);}, t1, t2, t3);
     }
 
     template<typename U, template<typename, int...> typename TensorType, typename T, int... N>
