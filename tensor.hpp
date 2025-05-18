@@ -1121,11 +1121,18 @@ namespace tensor_impl
         return tensor_for_each_binary(t1, t2, [&](const auto& v1, const auto& v2){return min(v1, v2);});
     }
 
-    template<typename bT, typename T>
+    template<template<typename, int...> typename bT, typename T, typename Type, int N1, int... N>
     inline
-    auto ternary(const bT& t1, const T& t2, const T& t3)
+    auto ternary(const bT<Type, N1, N...>& t1, const T& t2, const T& t3)
     {
         return tensor_for_each_nary([](const auto& v1, const auto& v2, const auto& v3){return stdmath::uternary(v1, v2, v3);}, t1, t2, t3);
+    }
+
+    template<typename bT, typename T>
+    inline
+    auto ternary(const bT& v1, const T& t2, const T& t3)
+    {
+        return tensor_for_each_nary([&](const auto& v2, const auto& v3){return stdmath::uternary(v1, v2, v3);}, t2, t3);
     }
 
     template<typename U, template<typename, int...> typename TensorType, typename T, int... N>
