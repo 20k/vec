@@ -825,6 +825,15 @@ namespace tensor_impl
 
     template<typename T>
     inline
+    T& operator-=(T& t1, const T& t2)
+    {
+        t1 = t1 - t2;
+
+        return t1;
+    }
+
+    template<typename T>
+    inline
     T operator-(const T& t1, const T& t2)
     {
         return tensor_for_each_binary(t1, t2, [](const auto& v1, const auto& v2){return v1 - v2;});
