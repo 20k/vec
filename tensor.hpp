@@ -1130,6 +1130,15 @@ namespace tensor_impl
         return tensor_for_each_binary(t1, t2, [&](const auto& v1, const auto& v2){return min(v1, v2);});
     }
 
+    template<typename T>
+    inline
+    auto sqrt(const T& t1)
+    {
+        using std::sqrt;
+
+        return tensor_for_each_unary(t1, [&](const auto& v1){return sqrt(v1);});
+    }
+
     template<template<typename, int...> typename bT, typename T, typename Type, int N1, int... N>
     inline
     auto ternary(const bT<Type, N1, N...>& t1, const T& t2, const T& t3)
