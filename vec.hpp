@@ -3405,15 +3405,7 @@ template<typename T>
 inline
 vec<3, T> back_rot_quat(vec<3, T> point, quaternion_base<T> q)
 {
-    vec<4, T> conj = q.q;
-
-    conj.xyz() = -conj.xyz();
-
-    //float len = fast_length(conj);
-
-    float len_sq = dot(conj, conj);
-
-    return rot_quat(point, {conj / len_sq});
+    return rot_quat(point, q.conjugate());
 }
 
 inline
