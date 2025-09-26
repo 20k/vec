@@ -3370,6 +3370,16 @@ struct quaternion_base
     {
         return {q.x(), q.y(), q.z()};
     }
+
+    T& operator[](size_t idx)
+    {
+        return q[idx];
+    }
+
+    const T& operator[](size_t idx) const
+    {
+        return q[idx];
+    }
 };
 
 template<typename T>
