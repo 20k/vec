@@ -3324,6 +3324,11 @@ struct quaternion_base
         q = q.norm();
     }
 
+    void load_from_axis_angle(const vec<3, T>& axis, const T& angle)
+    {
+        return load_from_axis_angle({axis[0], axis[1], axis[2], angle});
+    }
+
     T x()
     {
        return q.x();
