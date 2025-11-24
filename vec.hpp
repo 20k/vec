@@ -10,6 +10,7 @@
 #include <array>
 #include <string>
 #include <assert.h>
+#include <concepts>
 
 #define M_PI		3.14159265358979323846
 #define M_PIf ((float)M_PI)
@@ -19,12 +20,80 @@
 #define EXPAND_3(vec) vec.v[0], vec.v[1], vec.v[2]
 #define EXPAND_2(vec) vec.v[0], vec.v[1]
 
+template<typename T>
+concept Vec2Ish = requires(T t)
+{
+    t.x + t.x;
+    t.y;
+};
+
+template<typename T>
+concept Vec3Ish = requires(T t)
+{
+    t.x + t.x;
+    t.y;
+    t.z;
+};
+
+template<typename T>
+concept Vec4Ish = requires(T t)
+{
+    t.x + t.x;
+    t.y;
+    t.z;
+    t.w;
+};
+
 template<int N, typename T>
 struct vec
 {
     std::array<T, N> v = {};
 
     static constexpr int DIM = N;
+
+    template<typename... U>
+    vec(const U&... u) : v{u...}{}
+
+    vec(vec<N, T>&& other) : v(std::move(other.v)){}
+    vec(const vec<N, T>& other) : v(other.v){}
+
+    template<typename U>
+    requires (N == 2 && Vec2Ish<U>)
+    vec(const U& u)
+    {
+        v = {u.x, u.y};
+    }
+
+    template<typename U>
+    requires (N == 3 && Vec3Ish<U>)
+    vec(const U& u)
+    {
+        v = {u.x, u.y, u.z};
+    }
+
+    template<typename U>
+    requires (N == 4 && Vec4Ish<U>)
+    vec(const U& u)
+    {
+        v = {u.x, u.y, u.z, u.w};
+    }
+
+    vec(){}
+
+    vec<N, T>& operator=(const vec<N, T>& other)
+    {
+        if(this != &other)
+            v = other.v;
+
+        return *this;
+    }
+
+    vec<N, T>& operator=(vec<N, T>&& other)
+    {
+        v = std::move(other.v);
+
+        return *this;
+    }
 
     vec<N, T>& operator=(const T& val)
     {
@@ -3096,6 +3165,24 @@ template<typename T>
 struct quaternion_base
 {
     vec<4, T> q = {0,0,0,1};
+
+    quaternion_base(){}
+    quaternion_base(const T& v1, const T& v2, const T& v3, const T& v4)
+    {
+        q = {v1, v2, v3, v4};
+    }
+
+    quaternion_base(std::initializer_list<T> in)
+    {
+        assert(in.size() == 4);
+
+        int idx = 0;
+
+        for(const auto& i : in)
+        {
+            q[idx++] = i;
+        }
+    }
 
     void load_from_matrix(const mat<3, T>& m)
     {
