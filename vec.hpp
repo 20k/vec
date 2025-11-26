@@ -52,7 +52,10 @@ struct vec
     static constexpr int DIM = N;
 
     template<typename... U>
-    vec(const U&... u) : v{u...}{}
+    vec(const U&... u) : v{u...}
+    {
+        static_assert(sizeof...(u) == N);
+    }
 
     vec(vec<N, T>&& other) : v(std::move(other.v)){}
     vec(const vec<N, T>& other) : v(other.v){}
