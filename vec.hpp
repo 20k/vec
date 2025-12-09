@@ -173,6 +173,21 @@ struct vec
         return v[3];
     }
 
+    template<typename U>
+    U to()
+    {
+        if constexpr(N == 1)
+            return v[0];
+        else if constexpr(N == 2)
+            return {v[0], v[1]};
+        else if constexpr(N == 3)
+            return {v[0], v[1], v[2]};
+        else if constexpr(N == 4)
+            return {v[0], v[1], v[2], v[3]};
+        else
+            static_assert(false);
+    }
+
     vec<2, T>& xy()
     {
         ///umm. I think I might have committed some sort of deadly sin
