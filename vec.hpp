@@ -3185,6 +3185,7 @@ struct quaternion_base
     vec<4, T> q = {0,0,0,1};
 
     quaternion_base(){}
+
     quaternion_base(const T& v1, const T& v2, const T& v3, const T& v4)
     {
         q = {v1, v2, v3, v4};
@@ -3310,12 +3311,14 @@ struct quaternion_base
 
         if(is_negative)
         {
-            quaternion_base<T> ret{A * q1.q - B * q2.q};
+            quaternion_base<T> ret;
+            ret.from_vec({A * q1.q - B * q2.q});
 
             return ret.norm();
         }
 
-        quaternion_base<T> ret{A * q1.q + B * q2.q};
+        quaternion_base<T> ret;
+        ret.from_vec({A * q1.q + B * q2.q});
 
         return ret.norm();
     }
