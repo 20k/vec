@@ -2665,7 +2665,7 @@ struct mat
 
     mat<3, T> invert() const
     {
-        float d = det();
+        float d = T{1}/det();
 
         float a11, a12, a13, a21, a22, a23, a31, a32, a33;
 

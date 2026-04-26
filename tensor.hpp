@@ -1040,6 +1040,28 @@ namespace tensor_impl
     //template<typename TestTensor, typename T, int... N>
     //concept SizedTensor = std::is_base_of_v<tensor_base<TestTensor::template concrete_t, T, N...>, TestTensor>;
 
+    //matrix multiplication
+    template<typename T, int N>
+    inline
+    tensor<T, N> xform(const tensor<T, N, N>& t1, const tensor<T, N>& t2)
+    {
+        tensor<T, N> ret;
+
+        for(int i=0; i < N; i++)
+        {
+            T sum = 0;
+
+            for(int j=0; j < N; j++)
+            {
+                sum += t1[i, j] * t2[j];
+            }
+
+            ret[i] = sum;
+        }
+
+        return ret;
+    }
+
     template<typename T, int N>
     inline
     T sum_multiply(const tensor<T, N>& t1, const tensor<T, N>& t2)
