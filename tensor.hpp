@@ -1037,13 +1037,44 @@ namespace tensor_impl
         }
     };
 
+    template<typename T, int... N>
+    struct matrix : tensor<T, N...>
+    {
+        using tensor_base<T, N...>::dimensions;
+    };
+
     //template<typename TestTensor, typename T, int... N>
     //concept SizedTensor = std::is_base_of_v<tensor_base<TestTensor::template concrete_t, T, N...>, TestTensor>;
 
     //matrix multiplication
+    template<typename T, int N>
+    inline
+    matrix<T, N, N> mul(const matrix<T, N, N>& t1, const matrix<T, N, N>& t2)
+    {
+        matrix<T, N, N> ret;
+
+        for(int i=0; i < N; i++)
+        {
+            for(int j=0; j < N; j++)
+            {
+                T sum = 0;
+
+                for(int k=0; k < 3; k++)
+                {
+                    sum += t1[i, k] * t2[k, j];
+                }
+
+                ret[i, j] = sum;
+            }
+        }
+
+        return ret;
+    }
+
+    //matrix multiplication, vector on right
     template<typename T, int N, typename U>
     inline
-    U xform(const tensor<T, N, N>& t1, const U& t2)
+    U xform(const matrix<T, N, N>& t1, const U& t2)
     {
         U ret;
 
@@ -1057,6 +1088,27 @@ namespace tensor_impl
             }
 
             ret[i] = sum;
+        }
+
+        return ret;
+    }
+
+    template<typename T, int N, typename U>
+    inline
+    U xform(const U& t1, const matrix<T, N, N>& t2)
+    {
+        U ret;
+
+        for(int k=0; k < N; k++)
+        {
+            T sum = 0;
+
+            for(int j=0; j < N; j++)
+            {
+                sum += t1[j] * t2[j, k];
+            }
+
+            ret[k] = sum;
         }
 
         return ret;
@@ -1638,6 +1690,9 @@ namespace tensor_impl
 
 template<typename T, int... N>
 using tensor = tensor_impl::tensor<T, N...>;
+
+template<typename T, int... N>
+using matrix = tensor_impl::matrix<T, N...>;
 
 template<typename T, int... N>
 using unit_metric = tensor_impl::unit_metric<T, N...>;
