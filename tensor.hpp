@@ -1041,6 +1041,26 @@ namespace tensor_impl
     struct matrix : tensor<T, N...>
     {
         using tensor_base<T, N...>::dimensions;
+
+        matrix<T, N...> transpose()
+        {
+            assert(sizeof...(N) == 2);
+            assert((((N == tensor_impl::get_first_of<N...>()) && ...)));
+
+            int D = tensor_impl::get_first_of<N...>();
+
+            matrix<T, N...> out;
+
+            for(int i=0; i < D; i++)
+            {
+                for(int j=0; j < D; j++)
+                {
+                    out[i, j] = this->idx(j, i);
+                }
+            }
+
+            return out;
+        }
     };
 
     //template<typename TestTensor, typename T, int... N>
