@@ -234,6 +234,11 @@ struct vec
         return {v[1], v[2], v[3]};
     }
 
+    vec<2, T> zw() const requires(N >= 4)
+    {
+        return {v[2], v[3]};
+    }
+
     constexpr vec<N, T> operator+(const vec<N, T>& other) const
     {
         vec<N, T> r;
