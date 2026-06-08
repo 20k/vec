@@ -2353,10 +2353,20 @@ vec<N, T> projection(const vec<N, T>& v1, const vec<N, T>& dir)
 }
 
 template<int N, typename T>
+[[deprecated]]
 inline
 vec<N, T> reflect(const vec<N, T>& v1, const vec<N, T>& normal)
 {
     return (v1.norm() - 2.f * dot(v1.norm(), normal.norm()) * normal.norm()) * v1.norm() * v1.length();
+}
+
+template<int N, typename T>
+inline
+vec<N, T> reflect2(const vec<N, T>& v1, const vec<N, T>& normal)
+{
+    vec3f n = normal.norm();
+
+    return v1 - T{2.f} * dot(n, v1) * n;
 }
 
 template<int N, typename T>
