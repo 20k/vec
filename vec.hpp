@@ -3390,7 +3390,7 @@ struct quaternion_base
     {
         quaternion_base<T> conj = conjugate();
 
-        auto l = conj.q / (q.length() * q.length());
+        auto l = conj.q / q.squared_length();
 
         quaternion_base<T> q;
         q.q = l;
