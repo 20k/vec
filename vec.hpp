@@ -1758,7 +1758,7 @@ bool angle_lies_between_vectors_cos(const vec<N, T>& v1, const vec<N, T>& v2_nor
 
 ///should convert these functions to be N/T
 
-inline float r2d(float v)
+constexpr float r2d(float v)
 {
     return (v / (M_PI*2.f)) * 360.f;
 }
@@ -2095,7 +2095,7 @@ inline U conv_implicit(const T& q)
 }
 
 template<int N, typename T>
-inline vec<N, T> d2r(const vec<N, T>& v1)
+constexpr vec<N, T> d2r(const vec<N, T>& v1)
 {
     vec<N, T> ret;
 
@@ -2107,7 +2107,7 @@ inline vec<N, T> d2r(const vec<N, T>& v1)
     return ret;
 }
 
-inline float d2r(const float& v1)
+constexpr float d2r(const float& v1)
 {
     float ret = (v1 / 360.f) * M_PI * 2;
 
