@@ -174,7 +174,7 @@ struct vec
     }
 
     template<typename U>
-    U to()
+    U to() const
     {
         if constexpr(N == 1)
             return v[0];
