@@ -2478,6 +2478,7 @@ float circle_minimum_distance(float v1, float v2)
 }
 
 ///rename this function
+///returns vector from point to line
 template<int N, typename T>
 inline
 vec<N, T> point2line_shortest(const vec<N, T>& lp, const vec<N, T>& ldir, const vec<N, T>& p)
