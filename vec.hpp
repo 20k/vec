@@ -10,6 +10,7 @@
 #include <array>
 #include <string>
 #include <assert.h>
+#include <concepts>
 
 #define M_PI		3.14159265358979323846
 #define M_PIf ((float)M_PI)
@@ -19,12 +20,83 @@
 #define EXPAND_3(vec) vec.v[0], vec.v[1], vec.v[2]
 #define EXPAND_2(vec) vec.v[0], vec.v[1]
 
+template<typename T>
+concept Vec2Ish = requires(T t)
+{
+    t.x + t.x;
+    t.y;
+};
+
+template<typename T>
+concept Vec3Ish = requires(T t)
+{
+    t.x + t.x;
+    t.y;
+    t.z;
+};
+
+template<typename T>
+concept Vec4Ish = requires(T t)
+{
+    t.x + t.x;
+    t.y;
+    t.z;
+    t.w;
+};
+
 template<int N, typename T>
 struct vec
 {
     std::array<T, N> v = {};
 
     static constexpr int DIM = N;
+
+    template<typename... U>
+    vec(const U&... u) : v{u...}
+    {
+        static_assert(sizeof...(u) == N);
+    }
+
+    vec(vec<N, T>&& other) : v(std::move(other.v)){}
+    vec(const vec<N, T>& other) : v(other.v){}
+
+    template<typename U>
+    requires (N == 2 && Vec2Ish<U>)
+    vec(const U& u)
+    {
+        v = {u.x, u.y};
+    }
+
+    template<typename U>
+    requires (N == 3 && Vec3Ish<U>)
+    vec(const U& u)
+    {
+        v = {u.x, u.y, u.z};
+    }
+
+    template<typename U>
+    requires (N == 4 && Vec4Ish<U>)
+    vec(const U& u)
+    {
+        v = {u.x, u.y, u.z, u.w};
+    }
+
+    vec(){}
+
+    vec<N, T>& operator=(const vec<N, T>& other)
+    {
+        if(this != &other)
+            v = other.v;
+
+        return *this;
+    }
+
+    vec<N, T>& operator=(vec<N, T>&& other)
+    {
+        v = std::move(other.v);
+
+        return *this;
+    }
 
     vec<N, T>& operator=(const T& val)
     {
@@ -101,6 +173,21 @@ struct vec
         return v[3];
     }
 
+    template<typename U>
+    U to() const
+    {
+        if constexpr(N == 1)
+            return v[0];
+        else if constexpr(N == 2)
+            return {v[0], v[1]};
+        else if constexpr(N == 3)
+            return {v[0], v[1], v[2]};
+        else if constexpr(N == 4)
+            return {v[0], v[1], v[2], v[3]};
+        else
+            static_assert(false);
+    }
+
     vec<2, T>& xy()
     {
         ///umm. I think I might have committed some sort of deadly sin
@@ -145,6 +232,11 @@ struct vec
     vec<3, T> yzw() const requires(N >= 4)
     {
         return {v[1], v[2], v[3]};
+    }
+
+    vec<2, T> zw() const requires(N >= 4)
+    {
+        return {v[2], v[3]};
     }
 
     constexpr vec<N, T> operator+(const vec<N, T>& other) const
@@ -1666,7 +1758,7 @@ bool angle_lies_between_vectors_cos(const vec<N, T>& v1, const vec<N, T>& v2_nor
 
 ///should convert these functions to be N/T
 
-inline float r2d(float v)
+constexpr float r2d(float v)
 {
     return (v / (M_PI*2.f)) * 360.f;
 }
@@ -2003,7 +2095,7 @@ inline U conv_implicit(const T& q)
 }
 
 template<int N, typename T>
-inline vec<N, T> d2r(const vec<N, T>& v1)
+constexpr vec<N, T> d2r(const vec<N, T>& v1)
 {
     vec<N, T> ret;
 
@@ -2015,7 +2107,7 @@ inline vec<N, T> d2r(const vec<N, T>& v1)
     return ret;
 }
 
-inline float d2r(const float& v1)
+constexpr float d2r(const float& v1)
 {
     float ret = (v1 / 360.f) * M_PI * 2;
 
@@ -2261,10 +2353,20 @@ vec<N, T> projection(const vec<N, T>& v1, const vec<N, T>& dir)
 }
 
 template<int N, typename T>
+[[deprecated]]
 inline
 vec<N, T> reflect(const vec<N, T>& v1, const vec<N, T>& normal)
 {
     return (v1.norm() - 2.f * dot(v1.norm(), normal.norm()) * normal.norm()) * v1.norm() * v1.length();
+}
+
+template<int N, typename T>
+inline
+vec<N, T> reflect2(const vec<N, T>& v1, const vec<N, T>& normal)
+{
+    vec3f n = normal.norm();
+
+    return v1 - T{2.f} * dot(n, v1) * n;
 }
 
 template<int N, typename T>
@@ -2376,6 +2478,7 @@ float circle_minimum_distance(float v1, float v2)
 }
 
 ///rename this function
+///returns vector from point to line
 template<int N, typename T>
 inline
 vec<N, T> point2line_shortest(const vec<N, T>& lp, const vec<N, T>& ldir, const vec<N, T>& p)
@@ -2578,7 +2681,7 @@ struct mat
 
     mat<3, T> invert() const
     {
-        float d = det();
+        float d = T{1}/det();
 
         float a11, a12, a13, a21, a22, a23, a31, a32, a33;
 
@@ -3097,6 +3200,25 @@ struct quaternion_base
 {
     vec<4, T> q = {0,0,0,1};
 
+    quaternion_base(){}
+
+    quaternion_base(const T& v1, const T& v2, const T& v3, const T& v4)
+    {
+        q = {v1, v2, v3, v4};
+    }
+
+    quaternion_base(std::initializer_list<T> in)
+    {
+        assert(in.size() == 4);
+
+        int idx = 0;
+
+        for(const auto& i : in)
+        {
+            q[idx++] = i;
+        }
+    }
+
     void load_from_matrix(const mat<3, T>& m)
     {
         vec4f l;
@@ -3205,12 +3327,14 @@ struct quaternion_base
 
         if(is_negative)
         {
-            quaternion_base<T> ret{A * q1.q - B * q2.q};
+            quaternion_base<T> ret;
+            ret.from_vec({A * q1.q - B * q2.q});
 
             return ret.norm();
         }
 
-        quaternion_base<T> ret{A * q1.q + B * q2.q};
+        quaternion_base<T> ret;
+        ret.from_vec({A * q1.q + B * q2.q});
 
         return ret.norm();
     }
@@ -3277,7 +3401,7 @@ struct quaternion_base
     {
         quaternion_base<T> conj = conjugate();
 
-        vec4f l = conj.q / (q.lengthf() * q.lengthf());
+        auto l = conj.q / q.squared_length();
 
         quaternion_base<T> q;
         q.q = l;
@@ -3322,6 +3446,11 @@ struct quaternion_base
         q.v[3] = cos(angle/2);
 
         q = q.norm();
+    }
+
+    void load_from_axis_angle(const vec<3, T>& axis, const T& angle)
+    {
+        return load_from_axis_angle({axis[0], axis[1], axis[2], angle});
     }
 
     T x()
@@ -3370,6 +3499,16 @@ struct quaternion_base
     {
         return {q.x(), q.y(), q.z()};
     }
+
+    T& operator[](size_t idx)
+    {
+        return q[idx];
+    }
+
+    const T& operator[](size_t idx) const
+    {
+        return q[idx];
+    }
 };
 
 template<typename T>
@@ -3405,15 +3544,7 @@ template<typename T>
 inline
 vec<3, T> back_rot_quat(vec<3, T> point, quaternion_base<T> q)
 {
-    vec<4, T> conj = q.q;
-
-    conj.xyz() = -conj.xyz();
-
-    //float len = fast_length(conj);
-
-    float len_sq = dot(conj, conj);
-
-    return rot_quat(point, {conj / len_sq});
+    return rot_quat(point, q.conjugate());
 }
 
 inline
