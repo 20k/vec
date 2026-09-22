@@ -221,6 +221,11 @@ namespace tensor_impl
             return sizeof...(N);
         }*/
 
+        constexpr int get_dimension_count() const
+        {
+            return sizeof...(N);
+        }
+
         constexpr int get_first_of() const
         {
             return tensor_impl::get_first_of<N...>();
@@ -1171,7 +1176,7 @@ namespace tensor_impl
 
         if constexpr(std::is_same_v<real_type, void>)
         {
-            if constexpr(T::dimensions == 1)
+            if constexpr(v1.get_dimension_count() == 1)
             {
                 int len = v1.get_first_of();
 
@@ -1180,7 +1185,7 @@ namespace tensor_impl
                     u(v1.idx(i), ten.idx(i)...);
                 }
             }
-            else if constexpr(T::dimensions == 2)
+            else if constexpr(v1.get_dimension_count() == 2)
             {
                 int l1 = v1.get_first_of();
                 int l2 = v1.get_second_of();
@@ -1193,7 +1198,7 @@ namespace tensor_impl
                     }
                 }
             }
-            else if constexpr(T::dimensions == 3)
+            else if constexpr(v1.get_dimension_count() == 3)
             {
                 int l1 = v1.get_first_of();
                 int l2 = v1.get_second_of();
@@ -1219,7 +1224,7 @@ namespace tensor_impl
         }
         else
         {
-            if constexpr(T::dimensions == 1)
+            if constexpr(v1.get_dimension_count() == 1)
             {
                 int len = v1.get_first_of();
 
@@ -1232,7 +1237,7 @@ namespace tensor_impl
 
                 return ret;
             }
-            else if constexpr(T::dimensions == 2)
+            else if constexpr(v1.get_dimension_count() == 2)
             {
                 int l1 = v1.get_first_of();
                 int l2 = v1.get_second_of();
@@ -1249,7 +1254,7 @@ namespace tensor_impl
 
                 return ret;
             }
-            else if constexpr(T::dimensions == 3)
+            else if constexpr(v1.get_dimension_count() == 3)
             {
                 int l1 = v1.get_first_of();
                 int l2 = v1.get_second_of();
