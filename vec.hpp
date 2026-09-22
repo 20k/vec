@@ -57,8 +57,8 @@ struct vec
         static_assert(sizeof...(u) == N);
     }
 
-    vec(vec<N, T>&& other) : v(std::move(other.v)){}
-    vec(const vec<N, T>& other) : v(other.v){}
+    vec(vec<N, T>&& other) = default;
+    vec(const vec<N, T>& other) = default;
 
     template<typename U>
     requires (N == 2 && Vec2Ish<U>)
@@ -81,22 +81,9 @@ struct vec
         v = {u.x, u.y, u.z, u.w};
     }
 
-    vec(){}
-
-    vec<N, T>& operator=(const vec<N, T>& other)
-    {
-        if(this != &other)
-            v = other.v;
-
-        return *this;
-    }
-
-    vec<N, T>& operator=(vec<N, T>&& other)
-    {
-        v = std::move(other.v);
-
-        return *this;
-    }
+    vec() = default;
+    vec<N, T>& operator=(const vec<N, T>& other) = default;
+    vec<N, T>& operator=(vec<N, T>&& other) = default;
 
     vec<N, T>& operator=(const T& val)
     {
@@ -109,7 +96,6 @@ struct vec
 
         return *this;
     }
-
 
     T& operator[](size_t idx)
     {
