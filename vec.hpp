@@ -1421,7 +1421,7 @@ int random_select_with_val(const T& random, const std::vector<T>& weights)
         T left_probability = (i == 0) ? 0 : accum[i-1];
         T my_probability = accum[i];
 
-        if(random >= left_probability && random < my_probability)
+        if(random >= left_probability && random <= my_probability)
             return i;
     }
 
