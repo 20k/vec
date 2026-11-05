@@ -3608,6 +3608,8 @@ mat3f leapquat_to_mat(quaternion q)
     return m;
 }
 
+#ifndef NO_QUAT_ALIAS
 typedef quaternion quat;
+#endif
 
 #endif // VEC_HPP_INCLUDED
