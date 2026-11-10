@@ -81,6 +81,9 @@ struct vec
         v = {u.x, u.y, u.z, u.w};
     }
 
+    vec(const std::array<T, N>& other) : v(other){}
+    vec(std::array<T, N>&& other) : v(std::move(other)){}
+
     vec() = default;
     vec<N, T>& operator=(const vec<N, T>& other) = default;
     vec<N, T>& operator=(vec<N, T>&& other) = default;
