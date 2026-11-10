@@ -3,11 +3,14 @@
 
 #include <math.h>
 #include <float.h>
-#include <random>
-#include <utility>
 #include <array>
 #include <assert.h>
 #include <concepts>
+#include <vector>
+
+#ifdef VEC_UTILITY
+#include <utility>
+#endif
 
 #ifdef VEC_ALGORITHM
 #include <algorithm>
@@ -17,7 +20,6 @@
 #ifdef VEC_OSTREAM
 #include <ostream>
 #endif
-
 
 #define M_PI		3.14159265358979323846
 #define M_PIf ((float)M_PI)
@@ -1301,6 +1303,7 @@ bool any_nan(const vec<N, T>& v)
     return false;
 }
 
+#ifdef VEC_UTILITY
 inline
 std::pair<vec2f, vec2f> points_to_rect(vec2f start, vec2f fin)
 {
@@ -1309,6 +1312,7 @@ std::pair<vec2f, vec2f> points_to_rect(vec2f start, vec2f fin)
 
     return {tl, br};
 }
+#endif
 
 inline
 bool rect_intersect(vec2f a1, vec2f a2, vec2f b1, vec2f b2)
@@ -1541,22 +1545,24 @@ vec<N, T> signum(const vec<N, T>& in)
 
 ///0 -> 1, returns packed RGBA uint
 inline
-uint32_t rgba_to_uint(const vec<4, float>& rgba)
+unsigned int rgba_to_uint(const vec<4, float>& rgba)
 {
+    static_assert(sizeof(unsigned int) == 4);
+
     vec<4, float> val = clamp(rgba, 0.f, 1.f);
 
-    uint8_t r = val.v[0] * 255;
-    uint8_t g = val.v[1] * 255;
-    uint8_t b = val.v[2] * 255;
-    uint8_t a = val.v[3] * 255;
+    unsigned char r = val.v[0] * 255;
+    unsigned char g = val.v[1] * 255;
+    unsigned char b = val.v[2] * 255;
+    unsigned char a = val.v[3] * 255;
 
-    uint32_t ret = (r << 24) | (g << 16) | (b << 8) | a;
+    unsigned int ret = (r << 24) | (g << 16) | (b << 8) | a;
 
     return ret;
 }
 
 inline
-uint32_t rgba_to_uint(const vec<3, float>& rgb)
+unsigned int rgba_to_uint(const vec<3, float>& rgb)
 {
     return rgba_to_uint(vec4f{rgb.v[0], rgb.v[1], rgb.v[2], 1.f});
 }
