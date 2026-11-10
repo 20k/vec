@@ -2,14 +2,22 @@
 #define VEC_HPP_INCLUDED
 
 #include <math.h>
-#include <algorithm>
-#include <ostream>
 #include <float.h>
 #include <random>
 #include <utility>
 #include <array>
 #include <assert.h>
 #include <concepts>
+
+#ifdef VEC_ALGORITHM
+#include <algorithm>
+#endif
+
+//a breaking change, but aint nobody ever use this
+#ifdef VEC_OSTREAM
+#include <ostream>
+#endif
+
 
 #define M_PI		3.14159265358979323846
 #define M_PIf ((float)M_PI)
@@ -744,6 +752,7 @@ struct vec
         return rot;
     }
 
+    #ifdef VEC_ALGORITHM
     ///min -> max
     vec<N, T> sorted()
     {
@@ -760,6 +769,7 @@ struct vec
 
         return ret;
     }
+    #endif
 
     ///so y is along rectangle axis
     ///remember, z is not along the rectangle axis, its perpendicular to x
@@ -793,6 +803,7 @@ struct vec
         return v[0];
     }
 
+    #ifdef VEC_OSTREAM
     friend std::ostream& operator<<(std::ostream& os, const vec<N, T>& v1)
     {
         for(int i=0; i<N-1; i++)
@@ -804,6 +815,7 @@ struct vec
 
         return os;
     }
+    #endif
 };
 
 #if 1
@@ -2363,6 +2375,7 @@ inline vec<N, T> generate_flat_normal(const vec<N, T>& p1, const vec<N, T>& p2, 
     return cross((p2 - p1).norm(), (p3 - p1).norm()).norm();
 }
 
+#ifdef VEC_ALGORITHM
 ///t should be some container of vec3f
 ///sorted via 0 -> about vector, plane perpendicular to that
 ///I should probably make the second version an overload/specialisation, rather than a runtime check
@@ -2418,6 +2431,7 @@ inline std::vector<vec3f> sort_anticlockwise(const T& in, const vec3f& about, st
 
     return out;
 }
+#endif
 
 template<int N, typename T, typename U>
 inline
@@ -3056,6 +3070,7 @@ struct mat
         return ret;
     }
 
+    #ifdef VEC_OSTREAM
     friend std::ostream& operator<<(std::ostream& os, const mat<N, T>& v1)
     {
         for(int j=0; j<N; j++)
@@ -3068,6 +3083,7 @@ struct mat
 
         return os;
     }
+    #endif
 };
 
 typedef mat<3, float> mat3f;
@@ -3466,6 +3482,7 @@ struct quaternion_base
         return {{0, 0, 0, 1}};
     }
 
+    #ifdef VEC_OSTREAM
     friend std::ostream& operator<<(std::ostream& os, const quaternion_base<T>& v1)
     {
         for(int i=0; i<4-1; i++)
@@ -3477,6 +3494,7 @@ struct quaternion_base
 
         return os;
     }
+    #endif
 
     T get_scalar() const
     {
